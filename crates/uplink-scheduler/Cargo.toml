@@ -1,0 +1,16 @@
+[package]
+name        = "uplink-scheduler"
+description = "Cron-like recurring-payment scheduler; wasm32-safe via single tick() entry point"
+version.workspace     = true
+edition.workspace     = true
+license.workspace     = true
+repository.workspace  = true
+
+[dependencies]
+uplink-accounts = { workspace = true }
+uplink-storage  = { workspace = true }
+serde           = { workspace = true }
+serde_json      = { workspace = true }
+sha2            = { workspace = true }
+hex             = { workspace = true }
+thiserror       = { workspace = true }

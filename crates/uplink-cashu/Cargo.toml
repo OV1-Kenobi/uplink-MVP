@@ -1,0 +1,21 @@
+[package]
+name        = "uplink-cashu"
+description = "CDK-backed Cashu eCash — NIP-60 wallet + NIP-61 nutzap send (Phase A5 fallback)"
+version.workspace     = true
+edition.workspace     = true
+license.workspace     = true
+repository.workspace  = true
+
+[features]
+default = []
+cdk     = ["dep:cdk"]
+
+[dependencies]
+uplink-identity = { workspace = true }
+serde           = { workspace = true }
+serde_json      = { workspace = true }
+sha2            = { workspace = true }
+hex             = { workspace = true }
+thiserror       = { workspace = true }
+
+cdk = { workspace = true, optional = true }

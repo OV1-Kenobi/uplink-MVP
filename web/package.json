@@ -1,0 +1,33 @@
+{
+  "name": "uplink-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "wasm:build": "wasm-pack build ../crates/uplink-core --target web --out-dir ../web/src/wasm/pkg --features wasm",
+    "lint": "eslint src --ext ts,tsx --max-warnings 0",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "@vitejs/plugin-wasm": "^3.0.0",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.3",
+    "vite-plugin-pwa": "^0.20.5",
+    "workbox-window": "^7.1.0",
+    "eslint": "^9.9.0",
+    "@typescript-eslint/eslint-plugin": "^8.2.0",
+    "@typescript-eslint/parser": "^8.2.0"
+  }
+}

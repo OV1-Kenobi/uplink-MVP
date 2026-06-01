@@ -1,0 +1,20 @@
+[package]
+name        = "uplink-identity"
+description = "BIP39 → NIP-06 + BIP44 unified identity with domain-separated sub-account derivation"
+version.workspace     = true
+edition.workspace     = true
+license.workspace     = true
+repository.workspace  = true
+
+[dependencies]
+bitcoin    = { workspace = true }
+bip39      = { workspace = true }
+nostr      = { workspace = true }
+serde      = { workspace = true }
+sha2       = { workspace = true }
+hex        = { workspace = true }
+thiserror  = { workspace = true }
+rand       = { workspace = true }
+
+[dev-dependencies]
+# property-based: known-answer tests for key derivation

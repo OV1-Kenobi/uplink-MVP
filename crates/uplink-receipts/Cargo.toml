@@ -1,0 +1,14 @@
+[package]
+name        = "uplink-receipts"
+description = "Canonical receipt format mirroring OA PaymentAttemptReceiptV1 shape (no OA dep)"
+version.workspace     = true
+edition.workspace     = true
+license.workspace     = true
+repository.workspace  = true
+
+[dependencies]
+serde      = { workspace = true }
+serde_json = { workspace = true }
+sha2       = { workspace = true }
+hex        = { workspace = true }
+thiserror  = { workspace = true }

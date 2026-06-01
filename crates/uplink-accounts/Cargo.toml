@@ -1,0 +1,16 @@
+[package]
+name        = "uplink-accounts"
+description = "User/Wallet/Extension model with parent-child delegation and split-payment policy"
+version.workspace     = true
+edition.workspace     = true
+license.workspace     = true
+repository.workspace  = true
+
+[dependencies]
+uplink-identity = { workspace = true }
+uplink-nostr    = { workspace = true }
+serde           = { workspace = true }
+serde_json      = { workspace = true }
+sha2            = { workspace = true }
+hex             = { workspace = true }
+thiserror       = { workspace = true }

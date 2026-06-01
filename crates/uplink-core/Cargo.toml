@@ -1,0 +1,43 @@
+[package]
+name        = "uplink-core"
+description = "wasm-bindgen boundary — the ONLY crate exposed to TypeScript"
+version.workspace     = true
+edition.workspace     = true
+license.workspace     = true
+repository.workspace  = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default  = []
+wasm     = [
+    "dep:wasm-bindgen",
+    "dep:js-sys",
+    "dep:web-sys",
+    "uplink-storage/wasm",
+    "uplink-wallet/wasm",
+    "uplink-nostr/relay-pool",
+]
+native   = [
+    "uplink-storage/native",
+    "uplink-wallet/native",
+]
+
+[dependencies]
+uplink-identity  = { workspace = true }
+uplink-wallet    = { workspace = true }
+uplink-nostr     = { workspace = true }
+uplink-accounts  = { workspace = true }
+uplink-scheduler = { workspace = true }
+uplink-receipts  = { workspace = true }
+uplink-storage   = { workspace = true }
+uplink-cashu     = { workspace = true }
+
+serde      = { workspace = true }
+serde_json = { workspace = true }
+thiserror  = { workspace = true }
+
+wasm-bindgen = { workspace = true, optional = true }
+js-sys       = { workspace = true, optional = true }
+web-sys      = { workspace = true, optional = true }

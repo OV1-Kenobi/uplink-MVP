@@ -1,0 +1,99 @@
+/* Uplink — base styles */
+:root {
+  --bg: #0f0f23;
+  --surface: #1a1a2e;
+  --surface-2: #16213e;
+  --accent: #e8b86d;
+  --accent-sat: #f7c948;
+  --text: #e8e8f0;
+  --text-muted: #888;
+  --danger: #e05555;
+  --success: #55e090;
+  --border: rgba(255,255,255,0.08);
+  --radius: 12px;
+  --font: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.5;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root { min-height: 100dvh; }
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  max-width: 430px;
+  margin: 0 auto;
+}
+
+.app__content {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px; /* nav height */
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--font);
+  font-size: 1rem;
+  padding: 0.75rem 1.5rem;
+  transition: opacity 0.15s;
+}
+
+button:hover { opacity: 0.85; }
+button:active { opacity: 0.7; }
+
+.btn-primary {
+  background: var(--accent);
+  color: #0f0f23;
+  font-weight: 700;
+  width: 100%;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+input, textarea {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  outline: none;
+}
+
+input:focus, textarea:focus {
+  border-color: var(--accent);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.page { padding: 1.5rem 1rem; }
+.page-title { font-size: 1.4rem; font-weight: 700; margin: 0 0 1.25rem; }
+
+.muted { color: var(--text-muted); font-size: 0.875rem; }
+.mono { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.8rem; }

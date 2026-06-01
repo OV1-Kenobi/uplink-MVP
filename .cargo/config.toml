@@ -1,0 +1,21 @@
+# Uplink — Cargo build configuration
+# ---------------------------------------------------------------------------
+# wasm32 target: used for the browser bundle (uplink-core via wasm-pack)
+# ---------------------------------------------------------------------------
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "target-feature=+simd128"]
+
+# ---------------------------------------------------------------------------
+# Build cache — sccache if available (CI sets RUSTC_WRAPPER=sccache)
+# ---------------------------------------------------------------------------
+# [build]
+# rustc-wrapper = "sccache"   # uncomment in CI images that have sccache
+
+# ---------------------------------------------------------------------------
+# Alias shortcuts
+# ---------------------------------------------------------------------------
+[alias]
+wasm-build  = "build -p uplink-core --target wasm32-unknown-unknown --release"
+host-run    = "run -p host-cli"
+check-all   = "check --workspace --all-targets"
+test-all    = "test --workspace"

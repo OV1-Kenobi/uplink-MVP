@@ -1,0 +1,32 @@
+[package]
+name        = "host-cli"
+description = "Native host-cli for dev, CI regtest smoke tests, and always-on agent payments"
+version.workspace     = true
+edition.workspace     = true
+license.workspace     = true
+repository.workspace  = true
+
+[[bin]]
+name = "uplink"
+path = "src/main.rs"
+
+[features]
+default = ["native"]
+native  = ["uplink-core/native", "uplink-wallet/native", "uplink-storage/native"]
+
+[dependencies]
+uplink-core      = { workspace = true }
+uplink-identity  = { workspace = true }
+uplink-wallet    = { workspace = true }
+uplink-nostr     = { workspace = true }
+uplink-accounts  = { workspace = true }
+uplink-scheduler = { workspace = true }
+uplink-receipts  = { workspace = true }
+uplink-storage   = { workspace = true }
+
+tokio            = { workspace = true }
+clap             = { workspace = true }
+serde_json       = { workspace = true }
+anyhow           = { workspace = true }
+tracing          = { workspace = true }
+tracing-subscriber = { workspace = true }

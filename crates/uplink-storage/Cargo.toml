@@ -1,0 +1,29 @@
+[package]
+name        = "uplink-storage"
+description = "KVStore trait + IndexedDB (wasm32) and sled (native) adapters; encrypted at rest"
+version.workspace     = true
+edition.workspace     = true
+license.workspace     = true
+repository.workspace  = true
+
+[features]
+default = []
+native  = ["dep:sled"]
+wasm    = ["dep:web-sys", "dep:js-sys", "dep:wasm-bindgen"]
+
+[dependencies]
+serde      = { workspace = true }
+serde_json = { workspace = true }
+aes-gcm    = { workspace = true }
+sha2       = { workspace = true }
+hex        = { workspace = true }
+rand       = { workspace = true }
+thiserror  = { workspace = true }
+
+# native only
+sled       = { version = "0.34", optional = true }
+
+# wasm only
+web-sys      = { workspace = true, optional = true }
+js-sys       = { workspace = true, optional = true }
+wasm-bindgen = { workspace = true, optional = true }

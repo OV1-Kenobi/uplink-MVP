@@ -1,0 +1,37 @@
+[package]
+name        = "uplink-wallet"
+description = "LDK Lightning wallet + BDK on-chain + LSP client stub (Stable-Channels)"
+version.workspace     = true
+edition.workspace     = true
+license.workspace     = true
+repository.workspace  = true
+
+[features]
+default  = []
+# native: full LDK node via ldk-node (host-cli)
+native   = ["dep:ldk-node", "dep:tokio"]
+# wasm: hand-assembled LDK with IndexedDB persistence + WS peer transport (Phase A4)
+wasm     = ["dep:wasm-bindgen", "dep:js-sys", "dep:web-sys"]
+
+[dependencies]
+uplink-identity  = { workspace = true }
+uplink-storage   = { workspace = true }
+
+lightning         = { workspace = true }
+lightning-invoice = { workspace = true }
+bitcoin           = { workspace = true }
+
+serde      = { workspace = true }
+serde_json = { workspace = true }
+sha2       = { workspace = true }
+hex        = { workspace = true }
+thiserror  = { workspace = true }
+
+# native only
+ldk-node = { workspace = true, optional = true }
+tokio    = { workspace = true, optional = true }
+
+# wasm only
+wasm-bindgen = { workspace = true, optional = true }
+js-sys       = { workspace = true, optional = true }
+web-sys      = { workspace = true, optional = true }

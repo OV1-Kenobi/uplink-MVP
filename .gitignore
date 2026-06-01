@@ -1,0 +1,12 @@
+/target/
+/web/node_modules/
+/web/dist/
+/web/pkg/
+*.lock
+!Cargo.lock
+.DS_Store
+.env
+.env.*
+!.env.example
+*.pem
+*.key
