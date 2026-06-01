@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import OnboardingPage from "./components/OnboardingPage.tsx";
 import DashboardPage from "./components/DashboardPage.tsx";
+import WalletPage from "./components/WalletPage.tsx";
 import StreamsPage from "./components/StreamsPage.tsx";
 import ContactsPage from "./components/ContactsPage.tsx";
 import SettingsPage from "./components/SettingsPage.tsx";
@@ -20,6 +21,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/wallet" element={<WalletPage />} />
           <Route path="/streams" element={<StreamsPage />} />
           <Route path="/contacts" element={<ContactsPage />} />
           <Route path="/settings" element={<SettingsPage />} />

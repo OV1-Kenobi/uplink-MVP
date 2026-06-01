@@ -13,4 +13,6 @@ pub enum NostrError {
     ZapResolution(String),
     #[error("LNURL fetch error: {0}")]
     LnurlFetch(String),
+    #[error("{0}")]
+    Other(String),
 }

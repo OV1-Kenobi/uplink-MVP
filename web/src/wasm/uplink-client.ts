@@ -227,3 +227,38 @@ export async function payInvoice(
   const json = await wasm.pay_invoice(bolt11, BigInt(maxFeeMsats), idempotencyKey);
   return JSON.parse(json as string) as PaymentResult;
 }
+
+// ---------------------------------------------------------------------------
+// Receipts (Phase A5)
+// ---------------------------------------------------------------------------
+
+export interface ReceiptResult {
+  event_id: string;
+  receipt_hash: string;
+}
+
+/**
+ * Build, sign, and publish a kind-9901 stable-stream receipt event.
+ * Returns the Nostr event ID and the canonical SHA-256 receipt hash.
+ */
+export async function createReceipt(params: {
+  streamId: string;
+  streamEventId: string;
+  recipientNpub: string;
+  periodIndex: number;
+  msatsPaid: number;
+  preimageHex: string;
+  paidAtUnix: number;
+}): Promise<ReceiptResult> {
+  const wasm = await getWasm();
+  const json = await wasm.create_receipt(
+    params.streamId,
+    params.streamEventId,
+    params.recipientNpub,
+    BigInt(params.periodIndex),
+    BigInt(params.msatsPaid),
+    params.preimageHex,
+    BigInt(params.paidAtUnix),
+  );
+  return JSON.parse(json as string) as ReceiptResult;
+}

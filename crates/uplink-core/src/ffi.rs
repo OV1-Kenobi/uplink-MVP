@@ -357,6 +357,66 @@ pub async fn pay_invoice(bolt11: String, max_fee_msats: u64, idempotency_key: St
 
 
 // ---------------------------------------------------------------------------
+// Receipt surface (Phase A5)
+// ---------------------------------------------------------------------------
+
+/// Build and publish a kind-9901 stable-stream receipt event.
+///
+/// Parameters (all strings):
+///   - stream_id: UUID hex of the stream
+///   - stream_event_id: Nostr event ID (hex) of the kind-30901 stream declaration
+///   - recipient_npub: bech32 npub of the payment recipient
+///   - period_index: payment period number
+///   - msats_paid: millisatoshis paid
+///   - preimage_hex: payment preimage from LDK
+///   - paid_at_unix: Unix timestamp of payment
+///
+/// Returns JSON: `{ "event_id": "<hex>", "receipt_hash": "<sha256_hex>" }`
+/// Publishes to relay pool if connected. Never returns secret material.
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub async fn create_receipt(
+    stream_id: String,
+    stream_event_id: String,
+    recipient_npub: String,
+    period_index: u64,
+    msats_paid: u64,
+    preimage_hex: String,
+    paid_at_unix: u64,
+) -> Result<JsValue, JsValue> {
+    use uplink_nostr::receipt::StableStreamReceipt;
+
+    let keys = IDENTITY
+        .with(|cell| cell.borrow().as_ref().map(|id| id.nostr_keys.clone()))
+        .ok_or_else(|| JsValue::from_str("no identity loaded"))?;
+
+    let receipt = StableStreamReceipt {
+        stream_id,
+        stream_event_id,
+        recipient_npub,
+        period_index,
+        msats_paid,
+        lsp_preimage_hex: preimage_hex,
+        paid_at_unix,
+    };
+
+    let receipt_hash = receipt.hash();
+    let event = receipt
+        .to_nostr_event(&keys)
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+    let event_id = event.id.to_hex();
+
+    // Publish if relay pool is ready (best-effort; do not fail if pool absent).
+    let pool_opt = RELAY_POOL.with(|cell| cell.borrow().clone());
+    if let Some(pool) = pool_opt {
+        let _ = pool.publish_event(event).await;
+    }
+
+    let out = serde_json::json!({ "event_id": event_id, "receipt_hash": receipt_hash });
+    Ok(JsValue::from_str(&out.to_string()))
+}
+
+// ---------------------------------------------------------------------------
 // Thread-local state
 // ---------------------------------------------------------------------------
 

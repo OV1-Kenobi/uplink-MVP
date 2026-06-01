@@ -1,9 +1,6 @@
 //! Nostr receipt event builder for stable-stream payments (kind 9901).
 //!
 //! Full tag schema: docs/adr/ADR-U-003-receipt-event-kind.md
-//!
-//! Phase A0: only the canonical hash is implemented. Full Nostr event
-//! construction (signing, tag building) is Phase A5.
 
 use nostr_sdk::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -23,10 +20,6 @@ pub struct StableStreamReceipt {
 }
 
 impl StableStreamReceipt {
-    /// Compute the canonical SHA-256 receipt hash.
-    ///
-    /// Input: `stream_id:period_index:msats_paid:lsp_preimage_hex`
-    /// Mirrors OA `PaymentAttemptReceiptV1` canonicalization (ADR-0006).
     pub fn hash(&self) -> String {
         let mut h = Sha256::new();
         h.update(self.stream_id.as_bytes());
@@ -39,16 +32,24 @@ impl StableStreamReceipt {
         hex::encode(h.finalize())
     }
 
-    /// Build a signed Nostr event (kind 9901) for this receipt.
-    /// Phase A5 implementation.
     pub fn to_nostr_event(&self, keys: &nostr::Keys) -> Result<nostr::Event, crate::NostrError> {
-        let event = EventBuilder::new(KIND_STABLE_STREAM_RECEIPT, "")
-            .tag(Tag::parse(["e", &self.stream_event_id]).map_err(|e| crate::NostrError::Signing(e.to_string()))?)
-            .tag(Tag::parse(["p", &self.recipient_npub]).map_err(|e| crate::NostrError::Signing(e.to_string()))?)
-            .tag(Tag::parse(["amount", &self.msats_paid.to_string()]).map_err(|e| crate::NostrError::Signing(e.to_string()))?)
-            .tag(Tag::parse(["period_index", &self.period_index.to_string()]).map_err(|e| crate::NostrError::Signing(e.to_string()))?)
-            .tag(Tag::parse(["receipt_hash", &self.hash()]).map_err(|e| crate::NostrError::Signing(e.to_string()))?)
-            .tag(Tag::parse(["lsp_preimage", &self.lsp_preimage_hex]).map_err(|e| crate::NostrError::Signing(e.to_string()))?)
+        let receipt_hash = self.hash();
+        let stream_eid = EventId::parse(&self.stream_event_id)
+            .map_err(|e| crate::NostrError::Signing(e.to_string()))?;
+        let recipient_pk = PublicKey::parse(&self.recipient_npub)
+            .map_err(|e| crate::NostrError::Signing(e.to_string()))?;
+        let content = format!(
+            "Stable-stream receipt: {} msats paid for stream {} period {}",
+            self.msats_paid, self.stream_id, self.period_index
+        );
+        let mk = |k: &str, v: &str| Tag::parse([k, v]).map_err(|e| crate::NostrError::Signing(e.to_string()));
+        let event = EventBuilder::new(KIND_STABLE_STREAM_RECEIPT, content)
+            .tag(mk("e", &stream_eid.to_hex())?)
+            .tag(Tag::public_key(recipient_pk))
+            .tag(mk("amount", &self.msats_paid.to_string())?)
+            .tag(mk("period_index", &self.period_index.to_string())?)
+            .tag(mk("receipt_hash", &receipt_hash)?)
+            .tag(mk("lsp_preimage", &self.lsp_preimage_hex)?)
             .finalize(keys)
             .map_err(|e| crate::NostrError::Signing(e.to_string()))?;
         Ok(event)
@@ -70,6 +71,6 @@ mod tests {
             lsp_preimage_hex: "deadbeef".into(),
             paid_at_unix: 1_700_000_000,
         };
-        assert_eq!(r.hash(), r.hash()); // idempotent
+        assert_eq!(r.hash(), r.hash());
     }
 }

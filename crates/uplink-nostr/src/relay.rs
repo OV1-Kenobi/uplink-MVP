@@ -93,16 +93,8 @@ impl RelayPool {
         &self.client
     }
 
-    /// Clone the pool (handles underlying client cloning).
-    pub fn clone_pool(&self) -> Self {
-        Self {
-            config: self.config.clone(),
-            client: self.client.clone(),
-        }
-    }
-
-    /// Publish a generic Nostr event to all connected relays.
-    pub async fn publish_event(&self, event: Event) -> Result<(), RelayError> {
+    /// Publish a pre-built signed Nostr event to all connected relays.
+    pub async fn publish_event(&self, event: nostr::Event) -> Result<(), RelayError> {
         self.client
             .send_event(&event)
             .await
@@ -110,16 +102,26 @@ impl RelayPool {
         Ok(())
     }
 
-    /// Publish a kind-9901 receipt event for a stream payment.
+    /// Build and publish a kind-9901 stable-stream receipt event.
     pub async fn publish_receipt(
         &self,
         receipt: &crate::receipt::StableStreamReceipt,
         keys: &nostr::Keys,
-    ) -> Result<(), RelayError> {
+    ) -> Result<nostr::EventId, RelayError> {
         let event = receipt
             .to_nostr_event(keys)
             .map_err(|e| RelayError::Publish(e.to_string()))?;
-        self.publish_event(event).await
+        let event_id = event.id;
+        self.publish_event(event).await?;
+        Ok(event_id)
+    }
+
+    /// Clone the pool (handles underlying client cloning).
+    pub fn clone_pool(&self) -> Self {
+        Self {
+            config: self.config.clone(),
+            client: self.client.clone(),
+        }
     }
 }
 
