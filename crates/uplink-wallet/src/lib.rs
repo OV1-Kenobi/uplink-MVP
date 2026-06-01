@@ -20,6 +20,9 @@
 
 pub mod executor;
 pub mod lsp;
+#[cfg(feature = "native")]
+pub mod native;
+
 pub mod error;
 
 pub use error::WalletError;

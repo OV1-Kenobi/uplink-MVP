@@ -5,13 +5,13 @@ use aes_gcm::{
     Aes256Gcm, Key, Nonce,
 };
 use rand::RngCore;
-use sha2::{Digest, Sha256};
+use sha2::Sha256;
 
 use crate::kv::KvError;
 
 /// Derive a 32-byte AES key from a passphrase using Argon2id.
 pub fn derive_kek(passphrase: &str, salt: &[u8; 16]) -> [u8; 32] {
-    use argon2::{Argon2, Params, PasswordHasher};
+    use argon2::{Argon2, Params};
 
     let params = Params::new(16384, 2, 1, Some(32)).expect("static Argon2 params are valid");
     let argon2 = Argon2::new(argon2::Algorithm::Argon2id, argon2::Version::V0x13, params);

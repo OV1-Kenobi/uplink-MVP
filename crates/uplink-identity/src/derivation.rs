@@ -29,8 +29,10 @@ pub fn ldk_seed_path(account: u32) -> DerivationPath {
         .expect("static LDK seed path is valid")
 }
 
-/// Derive the 32-byte LDK `KeysManager` seed for the given account index.
-pub fn derive_ldk_seed(mnemonic: &Mnemonic, account: u32) -> [u8; 32] {
+/// Derive the 64-byte LDK `KeysManager` seed for the given account index.
+///
+/// Note: ldk-node 0.7 expects 64 bytes. We use the full SHA-512 hash of the child private key.
+pub fn derive_ldk_seed(mnemonic: &Mnemonic, account: u32) -> [u8; 64] {
     let seed_bytes = mnemonic.to_seed("");
     let root = Xpriv::new_master(Network::Bitcoin, &seed_bytes)
         .expect("mnemonic seed yields valid root xpriv");
@@ -40,12 +42,12 @@ pub fn derive_ldk_seed(mnemonic: &Mnemonic, account: u32) -> [u8; 32] {
         .derive_priv(&secp, &path)
         .expect("LDK derivation path is hardened and valid");
 
-    // Hash the derived secret key bytes into 32 bytes for KeysManager.
+    // Hash the derived secret key bytes into 64 bytes for KeysManager.
     let mut hasher = Sha512::new();
     hasher.update(child.private_key.secret_bytes());
     let hash = hasher.finalize();
-    let mut out = [0u8; 32];
-    out.copy_from_slice(&hash[..32]);
+    let mut out = [0u8; 64];
+    out.copy_from_slice(&hash);
     out
 }
 
@@ -54,14 +56,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn ldk_seed_is_32_bytes_and_deterministic() {
+    fn ldk_seed_is_64_bytes_and_deterministic() {
         let m: Mnemonic = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
             .parse()
             .unwrap();
         let seed_a = derive_ldk_seed(&m, 0);
         let seed_b = derive_ldk_seed(&m, 0);
         assert_eq!(seed_a, seed_b);
-        assert_ne!(seed_a, [0u8; 32]);
+        assert_ne!(seed_a, [0u8; 64]);
     }
 
     #[test]

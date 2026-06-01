@@ -25,6 +25,15 @@ struct Cli {
 
     #[command(subcommand)]
     command: Command,
+
+    #[arg(long, default_value = "regtest")]
+    network: String,
+
+    #[arg(long, default_value = "http://localhost:3000")]
+    esplora_url: String,
+
+    #[arg(long, default_value = "uplink_ldk")]
+    ldk_dir: String,
 }
 
 #[derive(Subcommand)]
@@ -68,6 +77,7 @@ enum IdentityAction {
 #[derive(Subcommand)]
 enum WalletAction {
     Balance,
+    Address,
     Receive { #[arg(long)] sats: u64 },
     Pay { bolt11: String },
 }
@@ -97,7 +107,17 @@ async fn main() -> anyhow::Result<()> {
 
     match cli.command {
         Command::Identity { action } => handle_identity(action, &store).await?,
-        Command::Wallet { action } => handle_wallet(action).await?,
+        Command::Wallet { action } => {
+            let id = load_identity(&store).await?;
+            let network = cli.network.parse::<bitcoin::Network>()?;
+            let wallet = uplink_wallet::native::NativeLdkWallet::new(
+                &id,
+                &cli.ldk_dir,
+                network,
+                &cli.esplora_url
+            )?;
+            handle_wallet(action, &wallet).await?
+        }
         Command::Stream { action } => handle_stream(action).await?,
         Command::Tick => handle_tick().await?,
     }
@@ -149,8 +169,45 @@ async fn handle_identity(action: IdentityAction, store: &dyn uplink_storage::KvS
     Ok(())
 }
 
-async fn handle_wallet(_action: WalletAction) -> anyhow::Result<()> {
-    println!("Wallet operations available in Phase A3 (LDK native wallet).");
+async fn load_identity(store: &dyn uplink_storage::KvStore) -> anyhow::Result<uplink_identity::UplinkIdentity> {
+    let mnemonic_bytes = store.get("identity_mnemonic").await?
+        .ok_or_else(|| anyhow::anyhow!("No identity found. Run 'identity new' or 'identity restore'."))?;
+    let mnemonic = String::from_utf8(mnemonic_bytes)?;
+
+    let account_bytes = store.get("identity_account").await?
+        .unwrap_or_else(|| 0u32.to_be_bytes().to_vec());
+    let account = u32::from_be_bytes(account_bytes.try_into().unwrap_or([0u8; 4]));
+
+    Ok(uplink_identity::UplinkIdentity::from_mnemonic_str(&mnemonic, account)?)
+}
+
+async fn handle_wallet(action: WalletAction, wallet: &uplink_wallet::native::NativeLdkWallet) -> anyhow::Result<()> {
+    use uplink_wallet::WalletExecutor;
+
+    match action {
+        WalletAction::Balance => {
+            wallet.sync()?;
+            let balance = wallet.balance()?;
+            println!("Wallet Balance:");
+            println!("  Lightning:  {} msats", balance.lightning_msats);
+            println!("  On-chain:   {} sats", balance.onchain_confirmed_sats);
+        }
+        WalletAction::Address => {
+            let addr = wallet.receive_onchain_address()?;
+            println!("On-chain Address: {}", addr);
+        }
+        WalletAction::Receive { sats } => {
+            let invoice = wallet.receive_invoice(sats * 1000, "Uplink host-cli top-up")?;
+            println!("BOLT11 Invoice:\n\n{}", invoice);
+        }
+        WalletAction::Pay { bolt11 } => {
+            println!("Initiating payment...");
+            let result = wallet.pay_invoice(&bolt11, 1000, "cli-payment")?;
+            println!("Payment Succeeded!");
+            println!("  Preimage: {}", result.preimage_hex);
+            println!("  Paid:     {} msats", result.total_msats_paid);
+        }
+    }
     Ok(())
 }
 

@@ -18,8 +18,8 @@ pub struct UplinkIdentity {
     account: u32,
     /// NIP-06 keypair — Nostr identity.
     pub nostr_keys: Keys,
-    /// 32-byte seed for LDK `KeysManager` at this account index.
-    pub ldk_node_seed: [u8; 32],
+    /// 32-byte (or 64-byte for ldk-node 0.7) seed for LDK `KeysManager` at this account index.
+    pub ldk_node_seed: [u8; 64],
 }
 
 impl UplinkIdentity {
