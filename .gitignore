@@ -13,3 +13,5 @@ uplink.db
 !.env.example
 *.pem
 *.key
+
+uplink_ldk/
