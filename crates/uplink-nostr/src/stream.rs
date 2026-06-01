@@ -85,12 +85,12 @@ mod tests {
         };
 
         let event = build_stream_event(&decl, &keys).unwrap();
-        assert_eq!(event.kind(), KIND_STABLE_STREAM);
-        
+        assert_eq!(event.kind, KIND_STABLE_STREAM);
+
         // Verify required tags are present
-        let tags = event.tags();
-        assert!(tags.iter().any(|t| t.as_slice().get(0).map(|s| s.as_str()) == Some("d")));
-        assert!(tags.iter().any(|t| t.as_slice().get(0).map(|s| s.as_str()) == Some("p")));
-        assert!(tags.iter().any(|t| t.as_slice().get(0).map(|s| s.as_str()) == Some("amount")));
+        let tags = &event.tags;
+        assert!(tags.iter().any(|t| t.as_slice().first().map(|s| s.as_str()) == Some("d")));
+        assert!(tags.iter().any(|t| t.as_slice().first().map(|s| s.as_str()) == Some("p")));
+        assert!(tags.iter().any(|t| t.as_slice().first().map(|s| s.as_str()) == Some("amount")));
     }
 }
