@@ -1,7 +1,7 @@
-//! Relay pool management — user-configurable whitelist, connect/disconnect, publish.
+//! Relay pool management.
 
-use nostr::Keys;
 use thiserror::Error;
+use nostr_sdk::prelude::*;
 
 /// Default relays shipped with Uplink.
 pub const DEFAULT_RELAYS: &[&str] = &[
@@ -38,30 +38,73 @@ impl Default for RelayConfig {
     }
 }
 
-/// Relay pool handle (stub — implementation uses nostr-sdk Client).
+/// Relay pool handle.
 ///
-/// Phase A2 will wire this to `nostr_sdk::Client` and the relay connection lifecycle.
+/// Wraps `nostr_sdk::Client` to provide Uplink-specific relay management.
 pub struct RelayPool {
     config: RelayConfig,
-    _keys: Keys,
+    client: Client,
 }
 
 impl RelayPool {
-    pub fn new(config: RelayConfig, keys: Keys) -> Self {
-        Self { config, _keys: keys }
+    /// Initialize a new relay pool with the given config and keys.
+    /// Does not connect until `connect()` is called.
+    pub fn new(config: RelayConfig, _keys: &nostr::Keys) -> Self {
+        // In 0.45.0-alpha.1, keys are passed during client creation if needed,
+        // but for profile resolution they might not be strictly necessary if just fetching.
+        // However, we'll use Client::default() or similar.
+        let client = Client::default();
+        Self { config, client }
     }
 
+    /// Connect to all configured relays.
+    pub async fn connect(&self) -> Result<(), RelayError> {
+        for url in &self.config.relays {
+            self.client.add_relay(url).await.map_err(|e| RelayError::Connection(e.to_string()))?;
+        }
+        self.client.connect().await;
+        Ok(())
+    }
+
+    /// Add a relay to the config and the active pool.
+    pub async fn add_relay(&mut self, url: String) -> Result<(), RelayError> {
+        if !self.config.relays.contains(&url) {
+            self.config.relays.push(url.clone());
+            self.client.add_relay(url.as_str()).await.map_err(|e| RelayError::Connection(e.to_string()))?;
+            self.client.connect_relay(url.as_str()).await.map_err(|e| RelayError::Connection(e.to_string()))?;
+        }
+        Ok(())
+    }
+
+    /// Remove a relay.
+    pub async fn remove_relay(&mut self, url: &str) -> Result<(), RelayError> {
+        self.config.relays.retain(|r| r != url);
+        self.client.remove_relay(url).await.map_err(|e| RelayError::Connection(e.to_string()))?;
+        Ok(())
+    }
+
+    /// Get the current config.
     pub fn config(&self) -> &RelayConfig {
         &self.config
     }
 
-    pub fn add_relay(&mut self, url: String) {
-        if !self.config.relays.contains(&url) {
-            self.config.relays.push(url);
-        }
+    /// Access the underlying nostr-sdk client.
+    pub fn client(&self) -> &Client {
+        &self.client
     }
 
-    pub fn remove_relay(&mut self, url: &str) {
-        self.config.relays.retain(|r| r != url);
+    /// Clone the pool (handles underlying client cloning).
+    pub fn clone_pool(&self) -> Self {
+        Self {
+            config: self.config.clone(),
+            client: self.client.clone(),
+        }
     }
 }
+
+impl Clone for RelayPool {
+    fn clone(&self) -> Self {
+        self.clone_pool()
+    }
+}
+

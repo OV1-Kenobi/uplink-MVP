@@ -109,6 +109,34 @@ export async function tick(nowUnix: number): Promise<SplitPaymentIntent[]> {
 }
 
 // ---------------------------------------------------------------------------
+// Nostr (Relays & Profiles)
+// ---------------------------------------------------------------------------
+
+export interface ResolvedProfile {
+  npub: string;
+  name?: string;
+  display_name?: string;
+  about?: string;
+  picture?: string;
+  nip05?: string;
+  nip05_verified: boolean;
+}
+
+/** Add a relay to the pool. */
+export async function addRelay(url: string): Promise<void> {
+  const wasm = await getWasm();
+  await wasm.add_relay(url);
+}
+
+/** Fetch a profile by npub. */
+export async function fetchProfile(npub: string): Promise<ResolvedProfile> {
+  const wasm = await getWasm();
+  const json = await wasm.fetch_profile(npub);
+  return JSON.parse(json as string) as ResolvedProfile;
+}
+
+
+// ---------------------------------------------------------------------------
 // Wallet (stubs — implemented in Phase A3/A4)
 // ---------------------------------------------------------------------------
 

@@ -3784,6 +3784,7 @@ dependencies = [
 name = "uplink-nostr"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "hex",
  "nostr",
  "nostr-sdk",
@@ -3791,6 +3792,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "thiserror 1.0.69",
+ "tokio",
 ]
 
 [[package]]

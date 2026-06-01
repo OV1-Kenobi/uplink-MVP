@@ -24,7 +24,9 @@ in `web/src/wasm/uplink-client.ts`.
 | `restore_identity(phr, idx, pass)` | `&str, u32, &str` | `npub: string` | Async; restores; persists encrypted |
 | `unlock_identity(pass)` | `&str` | `npub: string` | Async; loads from storage |
 | `export_mnemonic_words()` | — | `string[]` | Sync; one-time; zeros after retrieval |
-| `get_npub()` | — | `string \| null` | Sync; public identity only |
+| `get_npub()` | — | `string | null` | Sync; public identity only |
+| `add_relay(url)` | `string` | `void` | Async; adds and connects to relay |
+| `fetch_profile(npub)` | `string` | `ResolvedProfile` | Async; fetches kind 0 metadata |
 
 ### Scheduler
 

@@ -17,7 +17,6 @@ wasm     = [
     "dep:web-sys",
     "uplink-storage/wasm",
     "uplink-wallet/wasm",
-    "uplink-nostr/relay-pool",
 ]
 native   = [
     "uplink-storage/native",

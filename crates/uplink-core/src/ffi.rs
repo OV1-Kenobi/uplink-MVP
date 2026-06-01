@@ -24,6 +24,7 @@ pub async fn create_identity(account_index: u32, passphrase: &str) -> Result<JsV
     use uplink_identity::UplinkIdentity;
     use uplink_storage::{KvStore, PlatformStore};
 
+
     let id = UplinkIdentity::generate(account_index)
         .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
@@ -115,6 +116,55 @@ pub fn get_npub() -> Option<String> {
 }
 
 // ---------------------------------------------------------------------------
+// Relay surface
+// ---------------------------------------------------------------------------
+
+/// Add a relay to the pool.
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub async fn add_relay(url: String) -> Result<(), JsValue> {
+    use uplink_nostr::relay::RelayPool;
+
+    let keys = IDENTITY.with(|cell| {
+        cell.borrow().as_ref().map(|id| id.nostr_keys.clone())
+    }).ok_or_else(|| JsValue::from_str("no identity loaded"))?;
+
+    let mut pool_opt = RELAY_POOL.with(|cell| cell.borrow().clone());
+    if pool_opt.is_none() {
+        let config = uplink_nostr::relay::RelayConfig::default();
+        let pool = RelayPool::new(config, &keys);
+        pool.connect().await.map_err(|e| JsValue::from_str(&e.to_string()))?;
+        pool_opt = Some(pool);
+    }
+
+    if let Some(mut pool) = pool_opt {
+        pool.add_relay(url).await.map_err(|e| JsValue::from_str(&e.to_string()))?;
+        RELAY_POOL.with(|cell| *cell.borrow_mut() = Some(pool));
+    }
+    Ok(())
+}
+
+/// Fetch a profile by npub.
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub async fn fetch_profile(npub: &str) -> Result<JsValue, JsValue> {
+    use nostr::PublicKey;
+    use uplink_nostr::profile::resolve_profile;
+
+    let pk = PublicKey::from_bech32(npub).map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    let pool = RELAY_POOL.with(|cell| cell.borrow().clone())
+        .ok_or_else(|| JsValue::from_str("relay pool not initialized (call add_relay or connect first)"))?;
+
+    let profile = pool.resolve_profile(pk).await
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    serde_json::to_value(&profile)
+        .map(|v| JsValue::from_str(&v.to_string()))
+        .map_err(|e| JsValue::from_str(&e.to_string()))
+}
+
+// ---------------------------------------------------------------------------
 // Scheduler surface
 // ---------------------------------------------------------------------------
 
@@ -146,5 +196,6 @@ use uplink_scheduler::Scheduler;
 #[cfg(feature = "wasm")]
 thread_local! {
     static IDENTITY: RefCell<Option<UplinkIdentity>> = RefCell::new(None);
+    static RELAY_POOL: RefCell<Option<uplink_nostr::relay::RelayPool>> = RefCell::new(None);
     static SCHEDULER: RefCell<Scheduler> = RefCell::new(Scheduler::new(vec![]));
 }

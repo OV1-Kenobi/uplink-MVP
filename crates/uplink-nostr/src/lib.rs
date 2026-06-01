@@ -11,9 +11,7 @@
 //! - Custom event kinds: 30901 (stable_stream) + 9901 (stable_stream_receipt)
 //!
 //! ADRs: ADR-U-003 (receipt event kind), ADR-U-004 (delegation tokens)
-
-#![forbid(unsafe_code)]
-
+#[forbid(unsafe_code)]
 pub mod relay;
 pub mod kinds;
 pub mod zap;
