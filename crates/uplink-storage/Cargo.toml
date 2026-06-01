@@ -15,13 +15,16 @@ wasm    = ["dep:web-sys", "dep:js-sys", "dep:wasm-bindgen"]
 serde      = { workspace = true }
 serde_json = { workspace = true }
 aes-gcm    = { workspace = true }
+argon2     = { workspace = true }
 sha2       = { workspace = true }
 hex        = { workspace = true }
 rand       = { workspace = true }
+async-trait = { workspace = true }
+
 thiserror  = { workspace = true }
 
 # native only
-sled       = { version = "0.34", optional = true }
+sled       = { workspace = true, optional = true }
 
 # wasm only
 web-sys      = { workspace = true, optional = true }

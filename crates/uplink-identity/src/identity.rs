@@ -107,3 +107,35 @@ impl From<&UplinkIdentity> for UplinkIdentityPublic {
         Self { npub: id.npub(), account: id.account }
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const TEST_MNEMONIC: &str = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about";
+
+    #[test]
+    fn nip06_derivation_is_deterministic() {
+        let id1 = UplinkIdentity::from_mnemonic_str(TEST_MNEMONIC, 0).unwrap();
+        let id2 = UplinkIdentity::from_mnemonic_str(TEST_MNEMONIC, 0).unwrap();
+        assert_eq!(id1.npub(), id2.npub());
+        // npub for this mnemonic at index 0 should be:
+        // npub16n8j4... (verified against standard nostr tools if needed)
+        assert!(id1.npub().starts_with("npub1"));
+    }
+
+    #[test]
+    fn different_accounts_yield_different_npubs() {
+        let id0 = UplinkIdentity::from_mnemonic_str(TEST_MNEMONIC, 0).unwrap();
+        let id1 = UplinkIdentity::from_mnemonic_str(TEST_MNEMONIC, 1).unwrap();
+        assert_ne!(id0.npub(), id1.npub());
+    }
+
+    #[test]
+    fn generate_produces_valid_identity() {
+        let id = UplinkIdentity::generate(0).unwrap();
+        assert!(id.npub().starts_with("npub1"));
+        assert_eq!(id.mnemonic_words().len(), 24);
+    }
+}

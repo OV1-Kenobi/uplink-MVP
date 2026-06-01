@@ -9,17 +9,23 @@ use sha2::{Digest, Sha256};
 
 use crate::kv::KvError;
 
-/// Derive a 32-byte AES key from a passphrase using SHA-256 (placeholder).
-///
-/// TODO(A1): replace with Argon2id before shipping.
+/// Derive a 32-byte AES key from a passphrase using Argon2id.
 pub fn derive_kek(passphrase: &str, salt: &[u8; 16]) -> [u8; 32] {
-    let mut hasher = Sha256::new();
-    hasher.update(passphrase.as_bytes());
-    hasher.update(salt);
-    let result = hasher.finalize();
+    use argon2::{Argon2, Params, PasswordHasher};
+
+    let params = Params::new(16384, 2, 1, Some(32)).expect("static Argon2 params are valid");
+    let argon2 = Argon2::new(argon2::Algorithm::Argon2id, argon2::Version::V0x13, params);
+
     let mut key = [0u8; 32];
-    key.copy_from_slice(&result);
+    argon2
+        .hash_password_into(passphrase.as_bytes(), salt, &mut key)
+        .expect("Argon2 hashing is infallible for these params");
     key
+}
+
+/// Generate random bytes using OsRng.
+pub fn rand_bytes(out: &mut [u8]) {
+    OsRng.fill_bytes(out);
 }
 
 /// Encrypt `plaintext` with AES-256-GCM using the given 32-byte key.

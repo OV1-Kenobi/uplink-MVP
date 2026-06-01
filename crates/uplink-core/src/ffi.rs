@@ -20,11 +20,21 @@ use wasm_bindgen::prelude::*;
 /// `export_mnemonic_words()` to display the backup phrase to the user.
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn create_identity(account_index: u32) -> Result<JsValue, JsValue> {
+pub async fn create_identity(account_index: u32, passphrase: &str) -> Result<JsValue, JsValue> {
     use uplink_identity::UplinkIdentity;
+    use uplink_storage::{KvStore, PlatformStore};
+
     let id = UplinkIdentity::generate(account_index)
         .map_err(|e| JsValue::from_str(&e.to_string()))?;
-    // Store in thread-local (Phase A1 will add encrypted persistence)
+
+    // Persist
+    let store = PlatformStore::open(passphrase).map_err(|e| JsValue::from_str(&e.to_string()))?;
+    store.put("identity_mnemonic", id.mnemonic_phrase().as_bytes()).await
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+    store.put("identity_account", &account_index.to_be_bytes()).await
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    // Store in thread-local
     IDENTITY.with(|cell| *cell.borrow_mut() = Some(id.clone()));
     Ok(JsValue::from_str(&id.npub()))
 }
@@ -32,10 +42,46 @@ pub fn create_identity(account_index: u32) -> Result<JsValue, JsValue> {
 /// Restore an identity from a mnemonic phrase. Returns the npub.
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn restore_identity(mnemonic: &str, account_index: u32) -> Result<JsValue, JsValue> {
+pub async fn restore_identity(mnemonic: &str, account_index: u32, passphrase: &str) -> Result<JsValue, JsValue> {
     use uplink_identity::UplinkIdentity;
+    use uplink_storage::{KvStore, PlatformStore};
+
     let id = UplinkIdentity::from_mnemonic_str(mnemonic, account_index)
         .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    // Persist
+    let store = PlatformStore::open(passphrase).map_err(|e| JsValue::from_str(&e.to_string()))?;
+    store.put("identity_mnemonic", id.mnemonic_phrase().as_bytes()).await
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+    store.put("identity_account", &account_index.to_be_bytes()).await
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    IDENTITY.with(|cell| *cell.borrow_mut() = Some(id.clone()));
+    Ok(JsValue::from_str(&id.npub()))
+}
+
+/// Unlock an existing identity from storage.
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub async fn unlock_identity(passphrase: &str) -> Result<JsValue, JsValue> {
+    use uplink_identity::UplinkIdentity;
+    use uplink_storage::{KvStore, PlatformStore};
+
+    let store = PlatformStore::open(passphrase).map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    let mnemonic_bytes = store.get("identity_mnemonic").await
+        .map_err(|e| JsValue::from_str(&e.to_string()))?
+        .ok_or_else(|| JsValue::from_str("no identity found"))?;
+    let mnemonic = String::from_utf8(mnemonic_bytes).map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    let account_bytes = store.get("identity_account").await
+        .map_err(|e| JsValue::from_str(&e.to_string()))?
+        .unwrap_or_else(|| 0u32.to_be_bytes().to_vec());
+    let account = u32::from_be_bytes(account_bytes.try_into().unwrap_or([0u8; 4]));
+
+    let id = UplinkIdentity::from_mnemonic_str(&mnemonic, account)
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
     IDENTITY.with(|cell| *cell.borrow_mut() = Some(id.clone()));
     Ok(JsValue::from_str(&id.npub()))
 }

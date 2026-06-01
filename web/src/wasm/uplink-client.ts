@@ -37,22 +37,28 @@ export interface IdentityPublic {
 }
 
 /** Generate a fresh random Nostr identity. Returns the public npub. */
-export async function createIdentity(accountIndex = 0): Promise<string> {
+export async function createIdentity(passphrase: string, accountIndex = 0): Promise<string> {
   const wasm = await getWasm();
-  const result = wasm.create_identity(accountIndex);
-  if (typeof result !== "string") throw new Error("identity creation failed");
-  return result;
+  const result = await wasm.create_identity(accountIndex, passphrase);
+  return result as string;
 }
 
 /** Restore an identity from a BIP-39 mnemonic. Returns the public npub. */
 export async function restoreIdentity(
   mnemonic: string,
+  passphrase: string,
   accountIndex = 0
 ): Promise<string> {
   const wasm = await getWasm();
-  const result = wasm.restore_identity(mnemonic, accountIndex);
-  if (typeof result !== "string") throw new Error("identity restore failed");
-  return result;
+  const result = await wasm.restore_identity(mnemonic, accountIndex, passphrase);
+  return result as string;
+}
+
+/** Unlock an identity from storage using the passphrase. Returns npub. */
+export async function unlockIdentity(passphrase: string): Promise<string> {
+  const wasm = await getWasm();
+  const result = await wasm.unlock_identity(passphrase);
+  return result as string;
 }
 
 /** Export the mnemonic word list for backup (one-time display). */

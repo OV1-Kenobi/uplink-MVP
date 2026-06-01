@@ -20,10 +20,11 @@ in `web/src/wasm/uplink-client.ts`.
 
 | Function | Arguments | Returns | Notes |
 |---|---|---|---|
-| `create_identity(account_index)` | `u32` | `npub: string` | Generates random BIP-39 mnemonic; holds secret in thread-local |
-| `restore_identity(mnemonic, account_index)` | `&str, u32` | `npub: string` | Restores from phrase |
-| `export_mnemonic_words()` | — | `string[]` | One-time; zeros after retrieval |
-| `get_npub()` | — | `string \| null` | Public identity only |
+| `create_identity(idx, pass)` | `u32, &str` | `npub: string` | Async; generates mnemonic; persists encrypted |
+| `restore_identity(phr, idx, pass)` | `&str, u32, &str` | `npub: string` | Async; restores; persists encrypted |
+| `unlock_identity(pass)` | `&str` | `npub: string` | Async; loads from storage |
+| `export_mnemonic_words()` | — | `string[]` | Sync; one-time; zeros after retrieval |
+| `get_npub()` | — | `string \| null` | Sync; public identity only |
 
 ### Scheduler
 

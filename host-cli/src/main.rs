@@ -17,6 +17,12 @@ use tracing_subscriber::EnvFilter;
 #[derive(Parser)]
 #[command(name = "uplink", about = "Uplink streaming-sats CLI")]
 struct Cli {
+    #[arg(long, env = "UPLINK_PASSWORD", default_value = "default-dev-password")]
+    password: String,
+
+    #[arg(long, default_value = "uplink.db")]
+    db_path: String,
+
     #[command(subcommand)]
     command: Command,
 }
@@ -86,9 +92,11 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     let cli = Cli::parse();
+    let db_path = std::path::Path::new(&cli.db_path);
+    let store = uplink_storage::PlatformStore::open(db_path, &cli.password)?;
 
     match cli.command {
-        Command::Identity { action } => handle_identity(action).await?,
+        Command::Identity { action } => handle_identity(action, &store).await?,
         Command::Wallet { action } => handle_wallet(action).await?,
         Command::Stream { action } => handle_stream(action).await?,
         Command::Tick => handle_tick().await?,
@@ -97,11 +105,16 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn handle_identity(action: IdentityAction) -> anyhow::Result<()> {
+async fn handle_identity(action: IdentityAction, store: &dyn uplink_storage::KvStore) -> anyhow::Result<()> {
     match action {
         IdentityAction::New { account } => {
             let id = uplink_identity::UplinkIdentity::generate(account)?;
             println!("npub: {}", id.npub());
+
+            // Persist (mnemonic phrase)
+            store.put("identity_mnemonic", id.mnemonic_phrase().as_bytes()).await?;
+            store.put("identity_account", &account.to_be_bytes()).await?;
+
             println!("\n⚠️  BACKUP YOUR MNEMONIC — store offline:");
             for (i, word) in id.mnemonic_words().iter().enumerate() {
                 print!("{:2}. {:12}  ", i + 1, word);
@@ -111,10 +124,26 @@ async fn handle_identity(action: IdentityAction) -> anyhow::Result<()> {
         }
         IdentityAction::Restore { mnemonic, account } => {
             let id = uplink_identity::UplinkIdentity::from_mnemonic_str(&mnemonic, account)?;
+
+            // Persist
+            store.put("identity_mnemonic", id.mnemonic_phrase().as_bytes()).await?;
+            store.put("identity_account", &account.to_be_bytes()).await?;
+
             println!("Restored. npub: {}", id.npub());
         }
         IdentityAction::Show => {
-            println!("(Phase A1: load identity from encrypted storage)");
+            let mnemonic_bytes = store.get("identity_mnemonic").await?
+                .ok_or_else(|| anyhow::anyhow!("No identity found. Run 'identity new' or 'identity restore'."))?;
+            let mnemonic = String::from_utf8(mnemonic_bytes)?;
+
+            let account_bytes = store.get("identity_account").await?
+                .unwrap_or_else(|| 0u32.to_be_bytes().to_vec());
+            let account = u32::from_be_bytes(account_bytes.try_into().unwrap_or([0u8; 4]));
+
+            let id = uplink_identity::UplinkIdentity::from_mnemonic_str(&mnemonic, account)?;
+            println!("Current Identity:");
+            println!("  npub:    {}", id.npub());
+            println!("  account: {}", id.account_index());
         }
     }
     Ok(())

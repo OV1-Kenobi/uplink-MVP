@@ -32,6 +32,6 @@ pub use kv::{KvStore, KvError};
 #[cfg(feature = "native")]
 pub type PlatformStore = native::SledStore;
 
-// wasm adapter will be re-exported once implemented:
-// #[cfg(feature = "wasm")]
-// pub type PlatformStore = idb::IdbStore;
+// wasm adapter:
+#[cfg(feature = "wasm")]
+pub type PlatformStore = idb::LocalStorageStore;

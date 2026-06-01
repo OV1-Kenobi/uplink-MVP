@@ -24,8 +24,7 @@ pub fn bip44_onchain_path(account: u32) -> DerivationPath {
 /// LDK KeysManager seed path: m/535348'/0'/account'
 /// 535348 = ASCII "SSH" — chosen per ADR-U-001 (ecosystem alignment with sample wallets).
 pub fn ldk_seed_path(account: u32) -> DerivationPath {
-    format!("m/535348'/0'/{}' ", account)
-        .trim()
+    format!("m/535348'/0'/{}'", account)
         .parse()
         .expect("static LDK seed path is valid")
 }
