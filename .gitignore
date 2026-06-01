@@ -2,6 +2,9 @@
 /web/node_modules/
 /web/dist/
 /web/pkg/
+*.db/
+uplink.db
+
 *.lock
 !Cargo.lock
 .DS_Store
