@@ -19,7 +19,7 @@ pub struct ResolvedProfile {
 impl RelayPool {
     /// Resolve a profile for the given npub by querying the relay pool.
     pub async fn resolve_profile(&self, public_key: PublicKey) -> anyhow::Result<ResolvedProfile> {
-        let client = &self.client;
+        let client = self.client();
 
         // 1. Fetch metadata (kind 0)
         let filter = Filter::new()
@@ -27,7 +27,7 @@ impl RelayPool {
             .kind(Kind::Metadata)
             .limit(1);
 
-        let events = client.get_events_of(vec![filter], std::time::Duration::from_secs(5)).await?;
+        let events = client.fetch_events(vec![filter]).timeout(std::time::Duration::from_secs(5)).await?;
 
         let mut profile = ResolvedProfile {
             npub: public_key.to_bech32()?,

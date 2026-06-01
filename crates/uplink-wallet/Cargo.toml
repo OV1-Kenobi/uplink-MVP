@@ -9,9 +9,9 @@ repository.workspace  = true
 [features]
 default  = []
 # native: full LDK node via ldk-node (host-cli)
-native   = ["dep:ldk-node", "dep:tokio"]
+native   = ["dep:ldk-node", "tokio/full"]
 # wasm: hand-assembled LDK with IndexedDB persistence + WS peer transport (Phase A4)
-wasm     = ["dep:wasm-bindgen", "dep:js-sys", "dep:web-sys"]
+wasm     = ["dep:wasm-bindgen", "dep:js-sys", "dep:web-sys", "tokio/sync", "tokio/macros"]
 
 [dependencies]
 uplink-identity  = { workspace = true }

@@ -17,13 +17,19 @@ wasm     = [
     "dep:web-sys",
     "uplink-storage/wasm",
     "uplink-wallet/wasm",
+    "uplink-nostr/wasm",
 ]
 native   = [
     "uplink-storage/native",
     "uplink-wallet/native",
+    "uplink-nostr/native",
 ]
 
 [dependencies]
+nostr            = { workspace = true }
+wasm-bindgen-futures = { workspace = true }
+getrandom_02 = { package = "getrandom", version = "0.2", features = ["js"] }
+getrandom_03 = { package = "getrandom", version = "0.3", features = ["wasm_js"] }
 uplink-identity  = { workspace = true }
 uplink-wallet    = { workspace = true }
 uplink-nostr     = { workspace = true }

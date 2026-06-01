@@ -137,28 +137,55 @@ export async function fetchProfile(npub: string): Promise<ResolvedProfile> {
 
 
 // ---------------------------------------------------------------------------
-// Wallet (stubs — implemented in Phase A3/A4)
+// Wallet
 // ---------------------------------------------------------------------------
 
-export async function walletBalance(): Promise<{
+export interface WalletBalance {
   lightning_msats: number;
   onchain_confirmed_sats: number;
   stable_channel_usd_cents?: number;
-}> {
-  throw new Error("Wallet surface available in Phase A3");
 }
 
-export async function walletReceiveInvoice(
-  _msats: number,
-  _memo: string
-): Promise<string> {
-  throw new Error("Wallet surface available in Phase A3");
+export interface PaymentResult {
+  preimage_hex: string;
+  total_msats_paid: number;
+  idempotency_key: string;
 }
 
-export async function walletPayInvoice(
-  _bolt11: string,
-  _maxFeeMsats: number,
-  _idempotencyKey: string
-): Promise<{ preimage_hex: string; total_msats_paid: number }> {
-  throw new Error("Wallet surface available in Phase A3");
+/** Initialize the Wasm LDK wallet. */
+export async function initWallet(esploraUrl: string): Promise<void> {
+  const wasm = await getWasm();
+  await wasm.init_wallet(esploraUrl);
+}
+
+/** Get current balance. */
+export async function getBalance(): Promise<WalletBalance> {
+  const wasm = await getWasm();
+  const json = wasm.get_balance();
+  return JSON.parse(json as string) as WalletBalance;
+}
+
+/** Get a new on-chain receive address. */
+export async function getReceiveAddress(): Promise<string> {
+  const wasm = await getWasm();
+  const result = wasm.get_receive_address();
+  return result as string;
+}
+
+/** Generate a BOLT11 invoice. */
+export async function getInvoice(msats: number, memo: string): Promise<string> {
+  const wasm = await getWasm();
+  const result = wasm.get_invoice(BigInt(msats), memo);
+  return result as string;
+}
+
+/** Pay a BOLT11 invoice. */
+export async function payInvoice(
+  bolt11: string,
+  maxFeeMsats: number,
+  idempotencyKey: string
+): Promise<PaymentResult> {
+  const wasm = await getWasm();
+  const json = await wasm.pay_invoice(bolt11, BigInt(maxFeeMsats), idempotencyKey);
+  return JSON.parse(json as string) as PaymentResult;
 }

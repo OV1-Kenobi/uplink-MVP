@@ -12,7 +12,12 @@ path = "src/main.rs"
 
 [features]
 default = ["native"]
-native  = ["uplink-core/native", "uplink-wallet/native", "uplink-storage/native"]
+native  = [
+    "uplink-core/native",
+    "uplink-wallet/native",
+    "uplink-storage/native",
+    "uplink-nostr/native",
+]
 
 [dependencies]
 uplink-core      = { workspace = true }
@@ -24,7 +29,7 @@ uplink-scheduler = { workspace = true }
 uplink-receipts  = { workspace = true }
 uplink-storage   = { workspace = true }
 
-tokio            = { workspace = true }
+tokio            = { workspace = true, features = ["full"] }
 clap             = { workspace = true }
 serde_json       = { workspace = true }
 anyhow           = { workspace = true }

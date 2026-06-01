@@ -18,6 +18,8 @@ pub mod zap;
 pub mod receipt;
 pub mod delegation;
 pub mod error;
+pub mod profile;
+
 
 pub use error::NostrError;
 pub use kinds::{KIND_STABLE_STREAM, KIND_STABLE_STREAM_RECEIPT};

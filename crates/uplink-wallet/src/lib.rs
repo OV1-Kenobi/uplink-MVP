@@ -23,6 +23,9 @@ pub mod lsp;
 #[cfg(feature = "native")]
 pub mod native;
 
+#[cfg(feature = "wasm")]
+pub mod wasm;
+
 pub mod error;
 
 pub use error::WalletError;

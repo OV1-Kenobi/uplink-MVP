@@ -10,6 +10,14 @@
 #[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
 
+use nostr::prelude::*;
+use std::cell::RefCell;
+use std::sync::Arc;
+use uplink_identity::UplinkIdentity;
+use uplink_nostr::relay::RelayPool;
+use uplink_scheduler::Scheduler;
+
+
 // ---------------------------------------------------------------------------
 // Identity surface
 // ---------------------------------------------------------------------------
@@ -148,9 +156,6 @@ pub async fn add_relay(url: String) -> Result<(), JsValue> {
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub async fn fetch_profile(npub: &str) -> Result<JsValue, JsValue> {
-    use nostr::PublicKey;
-    use uplink_nostr::profile::resolve_profile;
-
     let pk = PublicKey::from_bech32(npub).map_err(|e| JsValue::from_str(&e.to_string()))?;
 
     let pool = RELAY_POOL.with(|cell| cell.borrow().clone())
@@ -185,17 +190,84 @@ pub fn tick(now_unix: u64) -> Result<JsValue, JsValue> {
 }
 
 // ---------------------------------------------------------------------------
-// Thread-local state (Phase A1 will persist these to IndexedDB)
+// Wallet surface
 // ---------------------------------------------------------------------------
 
+/// Initialize the Wasm LDK wallet.
 #[cfg(feature = "wasm")]
-use std::cell::RefCell;
-use uplink_identity::UplinkIdentity;
-use uplink_scheduler::Scheduler;
+#[wasm_bindgen]
+pub async fn init_wallet(esplora_url: String) -> Result<(), JsValue> {
+    use uplink_wallet::wasm::WasmLdkWallet;
+
+    let id = IDENTITY.with(|cell| cell.borrow().clone())
+        .ok_or_else(|| JsValue::from_str("no identity loaded"))?;
+
+    let wallet = WasmLdkWallet::new(&id, &esplora_url).await
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    WALLET.with(|cell| *cell.borrow_mut() = Some(Arc::new(wallet)));
+    Ok(())
+}
+
+/// Get the current balance snapshot.
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn get_balance() -> Result<JsValue, JsValue> {
+    let wallet = WALLET.with(|cell| cell.borrow().clone())
+        .ok_or_else(|| JsValue::from_str("wallet not initialized"))?;
+
+    let balance = wallet.balance().map_err(|e| JsValue::from_str(&e.to_string()))?;
+    serde_json::to_value(&balance)
+        .map(|v| JsValue::from_str(&v.to_string()))
+        .map_err(|e| JsValue::from_str(&e.to_string()))
+}
+
+/// Get a new on-chain receive address.
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn get_receive_address() -> Result<JsValue, JsValue> {
+    let wallet = WALLET.with(|cell| cell.borrow().clone())
+        .ok_or_else(|| JsValue::from_str("wallet not initialized"))?;
+
+    let addr = wallet.receive_onchain_address().map_err(|e| JsValue::from_str(&e.to_string()))?;
+    Ok(JsValue::from_str(&addr))
+}
+
+/// Generate a BOLT11 invoice.
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn get_invoice(msats: u64, memo: String) -> Result<JsValue, JsValue> {
+    let wallet = WALLET.with(|cell| cell.borrow().clone())
+        .ok_or_else(|| JsValue::from_str("wallet not initialized"))?;
+
+    let invoice = wallet.receive_invoice(msats, &memo).map_err(|e| JsValue::from_str(&e.to_string()))?;
+    Ok(JsValue::from_str(&invoice))
+}
+
+/// Pay a BOLT11 invoice.
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub async fn pay_invoice(bolt11: String, max_fee_msats: u64, idempotency_key: String) -> Result<JsValue, JsValue> {
+    let wallet = WALLET.with(|cell| cell.borrow().clone())
+        .ok_or_else(|| JsValue::from_str("wallet not initialized"))?;
+
+    let result = wallet.pay_invoice(&bolt11, max_fee_msats, &idempotency_key)
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    serde_json::to_value(&result)
+        .map(|v| JsValue::from_str(&v.to_string()))
+        .map_err(|e| JsValue::from_str(&e.to_string()))
+}
+
+
+// ---------------------------------------------------------------------------
+// Thread-local state
+// ---------------------------------------------------------------------------
 
 #[cfg(feature = "wasm")]
 thread_local! {
     static IDENTITY: RefCell<Option<UplinkIdentity>> = RefCell::new(None);
-    static RELAY_POOL: RefCell<Option<uplink_nostr::relay::RelayPool>> = RefCell::new(None);
+    static RELAY_POOL: RefCell<Option<RelayPool>> = RefCell::new(None);
     static SCHEDULER: RefCell<Scheduler> = RefCell::new(Scheduler::new(vec![]));
+    static WALLET: RefCell<Option<Arc<dyn uplink_wallet::WalletExecutor>>> = RefCell::new(None);
 }
