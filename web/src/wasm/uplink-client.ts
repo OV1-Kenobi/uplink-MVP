@@ -135,6 +135,44 @@ export async function fetchProfile(npub: string): Promise<ResolvedProfile> {
   return JSON.parse(json as string) as ResolvedProfile;
 }
 
+/** Publish a kind-30901 stream declaration to the relay pool. */
+export async function publishStreamDeclaration(
+  streamId: string,
+  recipientNpub: string,
+  msatsPerPeriod: number,
+  periodSeconds: number,
+  startAtUnix: number
+): Promise<void> {
+  const wasm = await getWasm();
+  await wasm.publish_stream_declaration(
+    streamId,
+    recipientNpub,
+    BigInt(msatsPerPeriod),
+    BigInt(periodSeconds),
+    BigInt(startAtUnix)
+  );
+}
+
+/** Publish a kind-9901 receipt event. */
+export async function publishReceipt(
+  streamId: string,
+  streamEventId: string,
+  recipientNpub: string,
+  periodIndex: number,
+  msatsPaid: number,
+  preimageHex: string
+): Promise<void> {
+  const wasm = await getWasm();
+  await wasm.publish_receipt(
+    streamId,
+    streamEventId,
+    recipientNpub,
+    BigInt(periodIndex),
+    BigInt(msatsPaid),
+    preimageHex
+  );
+}
+
 
 // ---------------------------------------------------------------------------
 // Wallet

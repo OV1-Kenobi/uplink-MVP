@@ -5,8 +5,10 @@
 //! Phase A0: only the canonical hash is implemented. Full Nostr event
 //! construction (signing, tag building) is Phase A5.
 
+use nostr_sdk::prelude::*;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use crate::kinds::KIND_STABLE_STREAM_RECEIPT;
 
 /// Canonical receipt for a single stable-stream period payment.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,9 +40,18 @@ impl StableStreamReceipt {
     }
 
     /// Build a signed Nostr event (kind 9901) for this receipt.
-    /// Phase A5 — stub in A0.
-    pub fn to_nostr_event(&self, _keys: &nostr::Keys) -> Result<nostr::Event, crate::NostrError> {
-        todo!("Phase A5: build kind-9901 receipt event")
+    /// Phase A5 implementation.
+    pub fn to_nostr_event(&self, keys: &nostr::Keys) -> Result<nostr::Event, crate::NostrError> {
+        let event = EventBuilder::new(KIND_STABLE_STREAM_RECEIPT, "")
+            .tag(Tag::parse(["e", &self.stream_event_id]).map_err(|e| crate::NostrError::Signing(e.to_string()))?)
+            .tag(Tag::parse(["p", &self.recipient_npub]).map_err(|e| crate::NostrError::Signing(e.to_string()))?)
+            .tag(Tag::parse(["amount", &self.msats_paid.to_string()]).map_err(|e| crate::NostrError::Signing(e.to_string()))?)
+            .tag(Tag::parse(["period_index", &self.period_index.to_string()]).map_err(|e| crate::NostrError::Signing(e.to_string()))?)
+            .tag(Tag::parse(["receipt_hash", &self.hash()]).map_err(|e| crate::NostrError::Signing(e.to_string()))?)
+            .tag(Tag::parse(["lsp_preimage", &self.lsp_preimage_hex]).map_err(|e| crate::NostrError::Signing(e.to_string()))?)
+            .finalize(keys)
+            .map_err(|e| crate::NostrError::Signing(e.to_string()))?;
+        Ok(event)
     }
 }
 

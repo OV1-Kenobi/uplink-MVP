@@ -100,6 +100,27 @@ impl RelayPool {
             client: self.client.clone(),
         }
     }
+
+    /// Publish a generic Nostr event to all connected relays.
+    pub async fn publish_event(&self, event: Event) -> Result<(), RelayError> {
+        self.client
+            .send_event(&event)
+            .await
+            .map_err(|e| RelayError::Publish(e.to_string()))?;
+        Ok(())
+    }
+
+    /// Publish a kind-9901 receipt event for a stream payment.
+    pub async fn publish_receipt(
+        &self,
+        receipt: &crate::receipt::StableStreamReceipt,
+        keys: &nostr::Keys,
+    ) -> Result<(), RelayError> {
+        let event = receipt
+            .to_nostr_event(keys)
+            .map_err(|e| RelayError::Publish(e.to_string()))?;
+        self.publish_event(event).await
+    }
 }
 
 impl Clone for RelayPool {

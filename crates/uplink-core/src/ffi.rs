@@ -169,6 +169,102 @@ pub async fn fetch_profile(npub: &str) -> Result<JsValue, JsValue> {
         .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
+/// Publish a kind-30901 stream declaration to the relay pool.
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub async fn publish_stream_declaration(
+    stream_id: String,
+    recipient_npub: String,
+    msats_per_period: u64,
+    period_seconds: u64,
+    start_at_unix: u64,
+) -> Result<JsValue, JsValue> {
+    use uplink_nostr::stream::{StreamDeclaration, build_stream_event};
+
+    // Get identity keys
+    let keys = IDENTITY.with(|cell| {
+        cell.borrow()
+            .as_ref()
+            .map(|id| id.nostr_keys.clone())
+            .ok_or_else(|| JsValue::from_str("no identity loaded"))
+    })?;
+
+    // Get relay pool
+    let pool = RELAY_POOL.with(|cell| cell.borrow().clone())
+        .ok_or_else(|| JsValue::from_str("relay pool not initialized"))?;
+
+    // Build stream declaration
+    let decl = StreamDeclaration {
+        stream_id,
+        recipient_npub_hex: recipient_npub,
+        msats_per_period,
+        period_seconds,
+        currency: "USD".to_string(),
+        lsp_pubkey_hex: "stub_lsp".to_string(),
+        start_at_unix,
+        end_at_unix: None,
+        max_total_sats: None,
+        memo: None,
+    };
+
+    // Build and publish event
+    let event = build_stream_event(&decl, &keys)
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    pool.publish_event(event)
+        .await
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    Ok(JsValue::from_str("ok"))
+}
+
+/// Publish a kind-9901 receipt event.
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub async fn publish_receipt(
+    stream_id: String,
+    stream_event_id: String,
+    recipient_npub: String,
+    period_index: u64,
+    msats_paid: u64,
+    preimage_hex: String,
+) -> Result<JsValue, JsValue> {
+    use uplink_nostr::receipt::StableStreamReceipt;
+
+    // Get identity keys
+    let keys = IDENTITY.with(|cell| {
+        cell.borrow()
+            .as_ref()
+            .map(|id| id.nostr_keys.clone())
+            .ok_or_else(|| JsValue::from_str("no identity loaded"))
+    })?;
+
+    // Get relay pool
+    let pool = RELAY_POOL.with(|cell| cell.borrow().clone())
+        .ok_or_else(|| JsValue::from_str("relay pool not initialized"))?;
+
+    // Build receipt
+    let receipt = StableStreamReceipt {
+        stream_id,
+        stream_event_id,
+        recipient_npub,
+        period_index,
+        msats_paid,
+        lsp_preimage_hex: preimage_hex,
+        paid_at_unix: std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs(),
+    };
+
+    // Publish receipt
+    pool.publish_receipt(&receipt, &keys)
+        .await
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    Ok(JsValue::from_str("ok"))
+}
+
 // ---------------------------------------------------------------------------
 // Scheduler surface
 // ---------------------------------------------------------------------------

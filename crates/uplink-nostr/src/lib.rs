@@ -16,6 +16,7 @@ pub mod relay;
 pub mod kinds;
 pub mod zap;
 pub mod receipt;
+pub mod stream;
 pub mod delegation;
 pub mod error;
 pub mod profile;
