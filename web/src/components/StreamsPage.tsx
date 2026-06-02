@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { upsertStream, removeStream, publishStreamDeclaration } from "../wasm/uplink-client.ts";
 
 interface StreamPolicy {

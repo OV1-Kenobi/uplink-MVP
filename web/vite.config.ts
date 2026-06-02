@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import wasm from "@vitejs/plugin-wasm";
+import wasm from "vite-plugin-wasm";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
