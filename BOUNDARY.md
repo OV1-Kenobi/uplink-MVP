@@ -34,42 +34,32 @@ in `web/src/wasm/uplink-client.ts`.
 |---|---|---|---|
 | `tick(now_unix)` | `u64` | `SplitPaymentIntent[]` | Advance scheduler to `now_unix`; returns due intents |
 
-### Wallet (Phase A3+)
+### Wallet
 
-| Function | Status |
-|---|---|
-| `wallet_balance()` | Phase A3 |
-| `wallet_receive_invoice(msats, memo)` | Phase A3 |
-| `wallet_pay_invoice(bolt11, max_fee, idempotency_key)` | Phase A3 |
-| `wallet_onchain_address()` | Phase A3 |
+| Function | Arguments | Returns | Notes |
+|---|---|---|---|
+| `init_wallet(esplora_url)` | `string` | `void` | Async; initializes LDK node |
+| `get_balance()` | — | `WalletBalance` | Sync; balance snapshot |
+| `get_receive_address()` | — | `string` | Sync; new on-chain address |
+| `get_invoice(msats, memo)` | `u64, string` | `string` | Sync; new BOLT11 invoice |
+| `pay_invoice(bolt11, fee, key)` | `string, u64, string` | `PaymentResult` | Async; pay with idempotency |
 
-### Relay pool (Phase A2+)
+### Streams & Scheduler
 
-| Function | Status |
-|---|---|
-| `add_relay(url)` | Phase A2 |
-| `remove_relay(url)` | Phase A2 |
-| `list_relays()` | Phase A2 |
-| `publish_profile(json_meta)` | Phase A2 |
-| `fetch_contact_profile(npub)` | Phase A2 |
+| Function | Arguments | Returns | Notes |
+|---|---|---|---|
+| `tick(now_unix)` | `u64` | `SplitPaymentIntent[]` | Advance scheduler; returns due intents |
+| `upsert_stream(id, p, amt, per, start)` | `string, string, u64, u64, u64` | `void` | Add/update stream policy |
+| `remove_stream(id)` | `string` | `void` | Remove stream |
+| `mark_executed(id, idx)` | `string, u64` | `void` | Mark period as paid |
+| `publish_stream_declaration(...)` | `...` | `void` | Async; publish kind-30901 to Nostr |
+| `create_receipt(...)` | `...` | `ReceiptResult` | Async; sign and publish kind-9901 |
 
-### Streams (Phase A6+)
+### Delegation
 
-| Function | Status |
-|---|---|
-| `create_stream(policy_json)` | Phase A6 |
-| `list_streams()` | Phase A6 |
-| `pause_stream(stream_id)` | Phase A6 |
-| `resume_stream(stream_id)` | Phase A6 |
-| `remove_stream(stream_id)` | Phase A6 |
-
-### Accounts (Phase A7+)
-
-| Function | Status |
-|---|---|
-| `issue_delegation(child_npub, policy_json)` | Phase A7 |
-| `revoke_delegation(token_id)` | Phase A7 |
-| `list_delegations()` | Phase A7 |
+| Function | Arguments | Returns | Notes |
+|---|---|---|---|
+| `create_delegation(npub, id, max, cap, exp)` | `string, string, u64, u64, u64` | `DelegationToken` | Async; issue new token |
 
 ## Error format
 All functions return errors as a thrown `Error` in TypeScript (the wasm

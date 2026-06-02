@@ -10,19 +10,19 @@ Uplink is a standalone PWA that lets human and agent users:
 - Maintain parent/child account relationships with delegated, policy-bound spend authority
 - Publish payment receipt events (kind 9901) to user-configured Nostr relays
 
-## Status — Phase A0 (Scaffolding)
+## Status — ✅ Complete (MVP Phase A)
 
 | Phase | Description | Status |
 |---|---|---|
 | A0 | Directory structure, crate stubs, web shell skeleton | ✅ Complete |
-| A1 | Identity (BIP-39 → NIP-06 + LDK seed) | 🔨 Next |
-| A2 | Nostr relay connectivity + profile resolution | ⬜ |
-| A3 | Lightning wallet on host-cli (regtest LDK) | ⬜ |
-| A4 | Lightning wallet in browser (wasm32 LDK + LSP) | ⬜ |
-| A5 | Pay-to-npub (NIP-57 zap + LSP stable-channel + NIP-61 fallback) | ⬜ |
-| A6 | Scheduler (recurring streaming-sats flows) | ⬜ |
-| A7 | Parent/child accounts + delegation | ⬜ |
-| A8 | Hardening + demo certification | ⬜ |
+| A1 | Identity (BIP-39 → NIP-06 + LDK seed) | ✅ Complete |
+| A2 | Nostr relay connectivity + profile resolution | ✅ Complete |
+| A3 | Lightning wallet on host-cli (regtest LDK) | ✅ Complete |
+| A4 | Lightning wallet in browser (wasm32 LDK + LSP) | ✅ Complete |
+| A5 | Pay-to-npub (NIP-57 zap + LSP stable-channel + NIP-61 fallback) | ✅ Complete |
+| A6 | Scheduler (recurring streaming-sats flows) | ✅ Complete |
+| A7 | Parent/child accounts + delegation | ✅ Complete |
+| A8 | Hardening + demo certification | ✅ Complete |
 
 ## Architecture
 
