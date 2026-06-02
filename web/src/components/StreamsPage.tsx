@@ -1,4 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { upsertStream, removeStream, publishStreamDeclaration } from "../wasm/uplink-client.ts";
+
+interface StreamPolicy {
+  stream_id: string;
+  recipient_npub_hex: string;
+  msats_per_period: number;
+  period_seconds: number;
+  status: string;
+}
 
 interface StreamForm {
   recipientNpub: string;
@@ -17,7 +26,7 @@ const DEFAULT_FORM: StreamForm = {
 };
 
 export default function StreamsPage() {
-  const [streams] = useState<unknown[]>([]);
+  const [streams, setStreams] = useState<StreamPolicy[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<StreamForm>(DEFAULT_FORM);
 
@@ -25,11 +34,51 @@ export default function StreamsPage() {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    // Phase A6: call wasm to create stream, publish kind-30901 to Nostr
-    alert("Stream creation available in Phase A6 (scheduler integration).");
-    setShowForm(false);
+    try {
+      const streamId = `str-${Math.random().toString(16).slice(2, 10)}`;
+      const now = Math.floor(Date.now() / 1000);
+
+      // 1. Add to local scheduler
+      await upsertStream({
+        streamId,
+        recipientNpub: form.recipientNpub,
+        msatsPerPeriod: parseInt(form.msatsPerPeriod),
+        periodSeconds: parseInt(form.periodSeconds),
+        startAtUnix: now,
+      });
+
+      // 2. Publish to Nostr
+      await publishStreamDeclaration(
+        streamId,
+        form.recipientNpub,
+        parseInt(form.msatsPerPeriod),
+        parseInt(form.periodSeconds),
+        now
+      );
+
+      setStreams([...streams, {
+        stream_id: streamId,
+        recipient_npub_hex: form.recipientNpub,
+        msats_per_period: parseInt(form.msatsPerPeriod),
+        period_seconds: parseInt(form.periodSeconds),
+        status: "Active"
+      }]);
+
+      setShowForm(false);
+      setForm(DEFAULT_FORM);
+      alert("Stream created and published to Nostr!");
+    } catch (err: any) {
+      alert(`Error creating stream: ${err.message || err}`);
+    }
+  }
+
+  async function handleDelete(streamId: string) {
+    if (confirm("Stop this stream?")) {
+      await removeStream(streamId);
+      setStreams(streams.filter(s => s.stream_id !== streamId));
+    }
   }
 
   return (
@@ -43,6 +92,25 @@ export default function StreamsPage() {
 
       {streams.length === 0 && !showForm && (
         <div className="card muted">No active streams yet. Create one to start streaming sats.</div>
+      )}
+
+      {!showForm && streams.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          {streams.map((s) => (
+            <div key={s.stream_id} className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontWeight: 600 }}>{s.msats_per_period / 1000} sats every {s.period_seconds}s</div>
+                <div className="muted" style={{ fontSize: "0.8rem", marginTop: "0.25rem" }}>
+                  To: {s.recipient_npub_hex.slice(0, 12)}...
+                </div>
+              </div>
+              <button className="btn-ghost" style={{ color: "var(--danger)", padding: "0.4rem 0.8rem", fontSize: "0.8rem" }}
+                onClick={() => handleDelete(s.stream_id)}>
+                Stop
+              </button>
+            </div>
+          ))}
+        </div>
       )}
 
       {showForm && (

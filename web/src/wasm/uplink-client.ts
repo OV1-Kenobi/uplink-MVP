@@ -108,6 +108,37 @@ export async function tick(nowUnix: number): Promise<SplitPaymentIntent[]> {
   return JSON.parse(json as string) as SplitPaymentIntent[];
 }
 
+/** Add or update a stream in the scheduler. */
+export async function upsertStream(params: {
+  streamId: string;
+  recipientNpub: string;
+  msatsPerPeriod: number;
+  periodSeconds: number;
+  startAtUnix: number;
+}): Promise<void> {
+  const wasm = await getWasm();
+  wasm.upsert_stream(
+    params.streamId,
+    params.recipientNpub,
+    BigInt(params.msatsPerPeriod),
+    BigInt(params.periodSeconds),
+    BigInt(params.startAtUnix)
+  );
+}
+
+/** Remove a stream from the scheduler. */
+export async function removeStream(streamId: string): Promise<void> {
+  const wasm = await getWasm();
+  wasm.remove_stream(streamId);
+}
+
+/** Mark a period as executed in the scheduler. */
+export async function markExecuted(streamId: string, periodIndex: number): Promise<void> {
+  const wasm = await getWasm();
+  wasm.mark_executed(streamId, BigInt(periodIndex));
+}
+
+
 // ---------------------------------------------------------------------------
 // Nostr (Relays & Profiles)
 // ---------------------------------------------------------------------------
@@ -262,3 +293,48 @@ export async function createReceipt(params: {
   );
   return JSON.parse(json as string) as ReceiptResult;
 }
+
+// ---------------------------------------------------------------------------
+// Delegation (Phase A7)
+// ---------------------------------------------------------------------------
+
+export interface DelegationPolicy {
+  max_per_tx_sats: number;
+  rolling_24h_cap_sats: number;
+  expires_at_unix: number;
+  allowed_recipient_npubs?: string[];
+}
+
+export interface DelegationToken {
+  token_id: string;
+  parent_npub: string;
+  child_npub: string;
+  child_wallet_id: string;
+  policy: DelegationPolicy;
+  envelope_event_id?: string;
+  issued_at_unix: number;
+  revoked: boolean;
+}
+
+/**
+ * Create a new delegation token (Parent -> Child).
+ * Returns the created DelegationToken object.
+ */
+export async function createDelegation(params: {
+  childNpub: string;
+  childWalletId: string;
+  maxPerTxSats: number;
+  rolling24hCapSats: number;
+  expiresAtUnix: number;
+}): Promise<DelegationToken> {
+  const wasm = await getWasm();
+  const json = await wasm.create_delegation(
+    params.childNpub,
+    params.childWalletId,
+    BigInt(params.maxPerTxSats),
+    BigInt(params.rolling24hCapSats),
+    BigInt(params.expiresAtUnix),
+  );
+  return JSON.parse(json as string) as DelegationToken;
+}
+

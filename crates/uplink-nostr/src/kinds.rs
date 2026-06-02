@@ -21,6 +21,13 @@ use nostr::Kind;
 ///   ["max_total_sats", <sats>]       // optional hard cap
 pub const KIND_STABLE_STREAM: Kind = Kind::Custom(30901);
 
+/// Kind 9900 — `stable_stream_delegation`
+///
+/// Regular event published by the parent to delegate spend authority to a child.
+/// This event is NIP-44 encrypted and then NIP-59 gift-wrapped.
+pub const KIND_STABLE_STREAM_DELEGATION: Kind = Kind::Custom(9900);
+
+
 /// Kind 9901 — `stable_stream_receipt`
 ///
 /// Regular (immutable) event published by the sender after each successful

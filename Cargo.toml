@@ -85,6 +85,8 @@ clap             = { version = "4", features = ["derive", "env"] }
 tracing          = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
+uuid             = "1.7"
+
 [workspace.lints.rust]
 missing_docs     = "allow"
 unexpected_cfgs  = { level = "allow" }

@@ -285,6 +285,66 @@ pub fn tick(now_unix: u64) -> Result<JsValue, JsValue> {
     })
 }
 
+/// Add or update a stream in the scheduler.
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn upsert_stream(
+    stream_id: String,
+    recipient_npub: String,
+    msats_per_period: u64,
+    period_seconds: u64,
+    start_at_unix: u64,
+) -> Result<(), JsValue> {
+    use uplink_scheduler::stream::{StreamPolicy, StreamStatus};
+    use uplink_accounts::SplitLeg;
+
+    let policy = StreamPolicy {
+        stream_id,
+        source_wallet_id: "default".to_string(),
+        legs: vec![SplitLeg {
+            leg_index: 0,
+            recipient_npub_hex: recipient_npub,
+            msats: msats_per_period,
+            max_fee_msats: msats_per_period / 10,
+            memo: None,
+            prefer_stable_channel: true,
+        }],
+        period_seconds,
+        start_at_unix,
+        end_at_unix: None,
+        max_total_msats: None,
+        status: StreamStatus::Active,
+        nostr_event_id: None,
+        last_executed_period: None,
+    };
+
+    SCHEDULER.with(|cell| {
+        cell.borrow_mut().upsert_stream(policy);
+    });
+    Ok(())
+}
+
+/// Remove a stream from the scheduler.
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn remove_stream(stream_id: &str) -> Result<(), JsValue> {
+    SCHEDULER.with(|cell| {
+        cell.borrow_mut().remove_stream(stream_id);
+    });
+    Ok(())
+}
+
+/// Mark a period as executed in the scheduler.
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn mark_executed(stream_id: &str, period_index: u64) -> Result<(), JsValue> {
+    SCHEDULER.with(|cell| {
+        cell.borrow_mut().mark_executed(stream_id, period_index);
+    });
+    Ok(())
+}
+
+
 // ---------------------------------------------------------------------------
 // Wallet surface
 // ---------------------------------------------------------------------------
@@ -415,6 +475,51 @@ pub async fn create_receipt(
     let out = serde_json::json!({ "event_id": event_id, "receipt_hash": receipt_hash });
     Ok(JsValue::from_str(&out.to_string()))
 }
+
+// ---------------------------------------------------------------------------
+// Delegation surface (Phase A7)
+// ---------------------------------------------------------------------------
+
+/// Create a new delegation token (Parent -> Child).
+///
+/// Parameters:
+///   - child_npub: bech32 npub of the child
+///   - child_wallet_id: label for the child's wallet
+///   - max_per_tx_sats: spending limit per tx
+///   - rolling_24h_cap_sats: spending limit per day
+///   - expires_at_unix: Unix timestamp of expiration
+///
+/// Returns JSON of `DelegationToken`.
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub async fn create_delegation(
+    child_npub: String,
+    child_wallet_id: String,
+    max_per_tx_sats: u64,
+    rolling_24h_cap_sats: u64,
+    expires_at_unix: u64,
+) -> Result<JsValue, JsValue> {
+    use uplink_nostr::delegation::{DelegationPolicy, issue_delegation};
+
+    let keys = IDENTITY
+        .with(|cell| cell.borrow().as_ref().map(|id| id.nostr_keys.clone()))
+        .ok_or_else(|| JsValue::from_str("no identity loaded"))?;
+
+    let policy = DelegationPolicy {
+        max_per_tx_sats,
+        rolling_24h_cap_sats,
+        expires_at_unix,
+        allowed_recipient_npubs: None,
+    };
+
+    let token = issue_delegation(&keys, &child_npub, &child_wallet_id, policy)
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    serde_json::to_value(&token)
+        .map(|v| JsValue::from_str(&v.to_string()))
+        .map_err(|e| JsValue::from_str(&e.to_string()))
+}
+
 
 // ---------------------------------------------------------------------------
 // Thread-local state
