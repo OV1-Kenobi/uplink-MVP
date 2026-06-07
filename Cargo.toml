@@ -11,6 +11,7 @@ members = [
     "crates/uplink-storage",
     "crates/uplink-core",
     "host-cli",
+    "crates/samplegen",
 ]
 
 [workspace.package]

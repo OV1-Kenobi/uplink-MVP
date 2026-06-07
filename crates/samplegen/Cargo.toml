@@ -1,0 +1,29 @@
+[package]
+name = "samplegen"
+description = "Branded website sample-upgrade generator: URL in -> upgraded site + accountability portal demo out."
+version.workspace    = true
+edition.workspace    = true
+license.workspace    = true
+repository.workspace = true
+publish = false
+
+[[bin]]
+name = "samplegen"
+path = "src/bin/samplegen.rs"
+
+[dependencies]
+# Shared workspace versions
+anyhow     = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }
+sha2       = { workspace = true }
+hex        = { workspace = true }
+clap       = { workspace = true }
+tokio      = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
+# Pinned locally (not provided by the workspace)
+chrono  = { version = "0.4", default-features = false, features = ["clock", "serde"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+
+[dev-dependencies]
+tempfile = "3"
