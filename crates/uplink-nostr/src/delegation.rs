@@ -2,7 +2,7 @@
 //!
 //! ADR-U-004: Delegation token format.
 //!
-//! A delegation token is a signed kind-X event (TBD in ADR-U-004 final),
+//! A delegation token is a kind-9900 event (KIND_STABLE_STREAM_DELEGATION),
 //! NIP-44 encrypted to the child's public key, then NIP-59 gift-wrapped.
 //!
 //! Revocation is a kind-9902 event (see `kinds.rs`) published to relays;
@@ -41,8 +41,11 @@ pub struct DelegationToken {
 
 /// Issue a delegation from `parent_keys` to `child_npub` with the given policy.
 ///
-/// Phase A7 implementation — signs a kind-9900 event, encrypts it (NIP-44),
-/// and gift-wraps it (NIP-59) for the child.
+/// Phase A7 implementation — builds the inner kind-9900 delegation event,
+/// NIP-44 encrypts it, and NIP-59 gift-wraps it for the child (ADR-U-004).
+/// The returned `envelope_event_id` is the gift-wrap event published to the
+/// child's relay; the seal inside it is signed by the parent, binding the
+/// delegation to the parent's Nostr identity.
 pub fn issue_delegation(
     parent_keys: &Keys,
     child_npub: &str,
@@ -52,26 +55,27 @@ pub fn issue_delegation(
     let issued_at_unix = Timestamp::now().as_secs();
     let token_id = format!("del-{}", uuid::Uuid::new_v4());
 
-    let _child_pk = PublicKey::parse(child_npub)
+    let child_pk = PublicKey::parse(child_npub)
         .map_err(|e| crate::NostrError::Signing(e.to_string()))?;
+    let child_hex = child_pk.to_hex();
 
-    // 1. Build the inner delegation event (kind 9900)
+    // 1. Build the inner delegation rumor (kind 9900), authored by the parent.
     let content = serde_json::to_string(&policy)
         .map_err(|e| crate::NostrError::Other(e.to_string()))?;
 
-    let inner_event = EventBuilder::new(KIND_STABLE_STREAM_DELEGATION, content)
-        .tag(Tag::parse(["p", child_npub]).map_err(|e| crate::NostrError::Signing(e.to_string()))?)
+    let rumor: UnsignedEvent = EventBuilder::new(KIND_STABLE_STREAM_DELEGATION, content)
+        .tag(Tag::parse(["p", child_hex.as_str()]).map_err(|e| crate::NostrError::Signing(e.to_string()))?)
         .tag(Tag::parse(["token_id", &token_id]).map_err(|e| crate::NostrError::Signing(e.to_string()))?)
         .tag(Tag::parse(["expires", &policy.expires_at_unix.to_string()]).map_err(|e| crate::NostrError::Signing(e.to_string()))?)
         .tag(Tag::parse(["child_wallet_id", child_wallet_id]).map_err(|e| crate::NostrError::Signing(e.to_string()))?)
-        .finalize(parent_keys)
-        .map_err(|e| crate::NostrError::Signing(e.to_string()))?;
+        .finalize_unsigned(parent_keys.public_key());
 
-    // 2. Wrap it for the child (NIP-59 gift wrap)
-    // Note: nostr-sdk 0.45-alpha.1 has built-in NIP-59 support in EventBuilder.
-    // For now, we'll store the inner event and policy.
-    // The actual NIP-59 gift-wrap is often done by the relay/client when sending.
-    // We'll return the token for local storage.
+    // 2. NIP-44 encrypt + NIP-59 gift-wrap the rumor for the child. The seal
+    //    inside the gift wrap is signed by the parent, binding the delegation
+    //    to the parent's identity; the outer wrap hides both parties on relays.
+    let gift_wrap: Event = GiftWrapBuilder::new(child_pk, rumor)
+        .finalize(parent_keys)
+        .map_err(|e| crate::NostrError::Other(e.to_string()))?;
 
     Ok(DelegationToken {
         token_id,
@@ -79,7 +83,7 @@ pub fn issue_delegation(
         child_npub: child_npub.to_string(),
         child_wallet_id: child_wallet_id.to_string(),
         policy,
-        envelope_event_id: Some(inner_event.id.to_hex()),
+        envelope_event_id: Some(gift_wrap.id.to_hex()),
         issued_at_unix,
         revoked: false,
     })
@@ -104,6 +108,38 @@ mod tests {
         assert_eq!(token.parent_npub, keys.public_key().to_hex());
         assert_eq!(token.child_npub, child_npub);
         assert!(token.envelope_event_id.is_some());
+    }
+
+    #[test]
+    fn gift_wrap_round_trips_to_child() {
+        let parent = Keys::generate();
+        let child = Keys::generate();
+        let policy = DelegationPolicy {
+            max_per_tx_sats: 1000,
+            rolling_24h_cap_sats: 5000,
+            expires_at_unix: 2_000_000_000,
+            allowed_recipient_npubs: None,
+        };
+
+        // Reproduce the production wrapping path so the round trip is verifiable.
+        let content = serde_json::to_string(&policy).unwrap();
+        let rumor: UnsignedEvent = EventBuilder::new(KIND_STABLE_STREAM_DELEGATION, content)
+            .tag(Tag::parse(["p", child.public_key().to_hex().as_str()]).unwrap())
+            .finalize_unsigned(parent.public_key());
+        let gift_wrap: Event = GiftWrapBuilder::new(child.public_key(), rumor)
+            .finalize(&parent)
+            .unwrap();
+        assert_eq!(gift_wrap.kind, Kind::GiftWrap);
+
+        // The child unwraps; the seal binds the rumor to the parent identity.
+        let unwrapped = extract_rumor(&child, &gift_wrap).unwrap();
+        assert_eq!(unwrapped.sender, parent.public_key());
+        assert_eq!(unwrapped.rumor.kind, KIND_STABLE_STREAM_DELEGATION);
+        let decoded: DelegationPolicy = serde_json::from_str(&unwrapped.rumor.content).unwrap();
+        assert_eq!(decoded.max_per_tx_sats, policy.max_per_tx_sats);
+
+        // A non-recipient cannot unwrap it.
+        assert!(extract_rumor(&parent, &gift_wrap).is_err());
     }
 }
 
