@@ -9,25 +9,33 @@
     "preview": "vite preview",
     "wasm:build": "wasm-pack build ../crates/uplink-core --target web --out-dir ../web/src/wasm/pkg --features wasm",
     "lint": "eslint src --ext ts,tsx --max-warnings 0",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "tauri:android:init": "tauri android init",
+    "tauri:android:dev": "tauri android dev",
+    "tauri:android:build": "tauri android build"
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.11.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.0",
     "zustand": "^5.0.0"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.11.2",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.2.0",
+    "@typescript-eslint/parser": "^8.2.0",
     "@vitejs/plugin-react": "^4.3.1",
-    "vite-plugin-wasm": "^3.3.0",
+    "eslint": "^9.9.0",
     "typescript": "^5.5.3",
     "vite": "^5.4.3",
     "vite-plugin-pwa": "^0.20.5",
-    "workbox-window": "^7.1.0",
-    "eslint": "^9.9.0",
-    "@typescript-eslint/eslint-plugin": "^8.2.0",
-    "@typescript-eslint/parser": "^8.2.0"
+    "vite-plugin-wasm": "^3.3.0",
+    "workbox-window": "^7.1.0"
   }
 }

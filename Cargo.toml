@@ -12,6 +12,10 @@ members = [
     "crates/uplink-core",
     "host-cli",
 ]
+# The Tauri shell builds against system WebView/Android toolchains and is kept
+# out of the root workspace so `cargo check --workspace` stays toolchain-light.
+# It references the uplink crates by path (see web/src-tauri/Cargo.toml).
+exclude = ["web/src-tauri"]
 
 [workspace.package]
 version       = "0.1.0"

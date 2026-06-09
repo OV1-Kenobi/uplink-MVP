@@ -1,0 +1,30 @@
+[package]
+name = "uplink-tauri"
+version = "0.1.0"
+description = "Uplink Tauri v2 shell — native uplink-core on desktop/Android/iOS"
+authors = ["Uplink"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/OV1-Kenobi/uplink-MVP"
+edition = "2021"
+rust-version = "1.77.2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.6.2" }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+tauri = { version = "2.11.2" }
+tauri-plugin-log = "2"
+
+# Uplink native core (excluded from the root workspace; referenced by path).
+uplink-core     = { path = "../../crates/uplink-core", features = ["native"] }
+uplink-identity = { path = "../../crates/uplink-identity" }
+uplink-storage  = { path = "../../crates/uplink-storage", features = ["native"] }

@@ -5,11 +5,40 @@ This file is the canonical reference for the TypeScript↔Rust boundary.
 ## The rule
 
 **TypeScript MUST NOT** call `fetch()`, `new WebSocket()`, `new EventSource()`,
-or any other network API directly. The **only** permitted exception is
-`web/src/wasm/uplink-client.ts`, which wraps the wasm-bindgen bundle.
+or any other network API directly. Network and custody operations live in the
+native Rust core; TypeScript reaches them only through one of the two sanctioned
+boundary wrapper files:
+
+- **Web / Netlify surface (Wasm):** `web/src/wasm/uplink-client.ts`, which wraps
+  the wasm-bindgen bundle (`crates/uplink-core/src/ffi.rs`).
+- **Tauri surface (native):** `web/src/tauri/uplink-tauri.ts`, which wraps
+  `invoke()` calls to native `#[tauri::command]` functions in
+  `web/src-tauri/src/commands.rs` (see ADR-U-006).
 
 ESLint enforces this rule via `ci/eslint-deny.config.js`.
 `cargo deny` enforces the Rust side via `ci/cargo-deny.toml`.
+
+## The Tauri native boundary (ADR-U-006)
+
+Under the Tauri shell the `uplink-*` crates compile **natively** (no Wasm
+constraints), and network/NFC/location operations run in the native core rather
+than behind a single Wasm file. The custody invariants are unchanged:
+
+- Mnemonic, LDK seed, and signing keys **never** cross back to the UI. Identity
+  commands return only the public npub (and non-secret descriptors).
+- Every command argument/return is typed; errors surface as a rejected
+  `invoke()` promise carrying a safe `String` message.
+- Persistence uses the native encrypted `PlatformStore` (sled) under the app
+  data dir.
+
+### Native commands (`web/src-tauri/src/commands.rs`)
+
+| Command | Arguments | Returns | Notes |
+|---|---|---|---|
+| `app_version()` | — | `string` | No-secret bridge health check |
+| `create_identity(passphrase, account)` | `string, u32` | `npub: string` | Async; generates + persists encrypted |
+| `restore_identity(mnemonic, passphrase, account)` | `string, string, u32` | `npub: string` | Async; restores + persists |
+| `current_identity(passphrase)` | `string` | `IdentityInfo \| null` | Async; loads persisted identity |
 
 ## Exported functions
 
