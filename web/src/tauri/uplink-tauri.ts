@@ -55,3 +55,8 @@ export async function hasIdentity(): Promise<boolean> {
 export async function exportMnemonicWords(passphrase: string): Promise<string[]> {
   return invoke<string[]>("export_mnemonic", { passphrase });
 }
+
+/** Clear the provisioned identity from the native store ("Reset app"). */
+export async function resetIdentity(): Promise<void> {
+  await invoke("reset_identity");
+}

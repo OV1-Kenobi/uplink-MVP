@@ -20,6 +20,7 @@ pub fn run() {
       commands::current_identity,
       commands::has_identity,
       commands::export_mnemonic,
+      commands::reset_identity,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

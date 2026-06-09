@@ -62,6 +62,41 @@ cargo test --workspace
 cargo run -p host-cli -- identity new
 ```
 
+## Android (FOSS) build & sideload — Tauri v2
+
+The native app is built with Tauri v2 (`web/src-tauri/`). The Android target is
+**FOSS / de-Googled** per **ADR-U-006**: no Google Play Services, no Firebase, no
+Play Integrity — distribution is sideload + Zapstore/F-Droid, never the Play Store.
+
+Prerequisites: JDK 17, the Android SDK (cmdline-tools + platform/build-tools), and
+the Android NDK; export `ANDROID_HOME` and `NDK_HOME`.
+
+```bash
+cd web
+
+# 1. Generate the Android Gradle project (creates src-tauri/gen/android).
+npm run tauri android init
+
+# 2. FOSS hardening check — the generated Gradle must contain NONE of these:
+#    'com.google.gms', 'com.google.firebase', 'play-services', 'google-services'.
+grep -rniE "com\.google\.(gms|firebase|android\.gms)|play-services|google-services" \
+  src-tauri/gen/android && echo "NON-FOSS DEP FOUND — remove before building" || echo "FOSS: clean"
+
+# 3. Build a sideloadable debug APK.
+npm run tauri android build -- --apk --debug
+
+# 4. Sideload to a de-Googled device (Pixel / GrapheneOS).
+adb install -r \
+  src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk
+```
+
+Push (later phases) uses **UnifiedPush** or a Nostr relay subscription, and
+geofencing uses AOSP `LocationManager` — never Google equivalents.
+
+> The generated `gen/android` project requires the Android SDK/NDK to be present
+> at init time; it is the one Phase-1 step that must run on a host with the
+> Android toolchain installed (and the on-device launch on the Pixel).
+
 ## Key design decisions
 
 See `docs/adr/` for all Architecture Decision Records:

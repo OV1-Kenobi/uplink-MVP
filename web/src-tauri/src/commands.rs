@@ -112,6 +112,20 @@ pub async fn has_identity(app: AppHandle) -> Result<bool, String> {
     store.exists(KEY_MNEMONIC).await.map_err(|e| e.to_string())
 }
 
+/// Clear the provisioned identity from the native store ("Reset app").
+///
+/// Removes the persisted identity keys so the device returns to the
+/// unprovisioned state. Returns no secret material and needs no passphrase —
+/// deletion removes the stored ciphertext without decrypting it (the native
+/// counterpart to the wasm `localStorage.clear()` reset path).
+#[tauri::command]
+pub async fn reset_identity(app: AppHandle) -> Result<(), String> {
+    let store = open_store(&app, "")?;
+    store.delete(KEY_MNEMONIC).await.map_err(|e| e.to_string())?;
+    store.delete(KEY_ACCOUNT).await.map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 /// Decrypt and return the mnemonic word list for the one-time backup screen.
 ///
 /// This is the native counterpart to the wasm `export_mnemonic_words` boundary

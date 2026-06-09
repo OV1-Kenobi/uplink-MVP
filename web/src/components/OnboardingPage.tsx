@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { createIdentity, restoreIdentity, exportMnemonicWords, unlockIdentity, hasIdentity } from "../identity.ts";
+import { createIdentity, restoreIdentity, exportMnemonicWords, unlockIdentity, hasIdentity, resetIdentity } from "../identity.ts";
 import { useIdentityStore } from "../store/identityStore.ts";
 
 type Step = "welcome" | "generate" | "backup" | "restore" | "unlock";
@@ -173,7 +173,7 @@ export default function OnboardingPage() {
           {loading ? "Unlocking…" : "Unlock"}
         </button>
         <p className="muted small" style={{ marginTop: "2rem" }}>
-          Lost password? <button className="btn-link" onClick={() => { localStorage.clear(); window.location.reload(); }}>Reset app</button>
+          Lost password? <button className="btn-link" onClick={async () => { await resetIdentity(); window.location.reload(); }}>Reset app</button>
         </p>
       </div>
     );

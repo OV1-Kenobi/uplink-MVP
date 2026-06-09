@@ -65,3 +65,21 @@ export async function hasIdentity(): Promise<boolean> {
     localStorage.getItem("identity_mnemonic") !== null
   );
 }
+
+/**
+ * Clear the provisioned identity on this device ("Reset app").
+ *
+ * Under Tauri this clears the native `sled` store; on the wasm/browser target
+ * it clears `localStorage`. Routed through the facade so the onboarding reset
+ * works on both targets (previously `localStorage.clear()` left the native
+ * store intact).
+ */
+export async function resetIdentity(): Promise<void> {
+  if (isTauri()) {
+    await native.resetIdentity();
+    return;
+  }
+  if (typeof localStorage !== "undefined") {
+    localStorage.clear();
+  }
+}
