@@ -100,3 +100,31 @@ pub async fn current_identity(
         account: id.account_index(),
     }))
 }
+
+/// Passphrase-free probe: is an identity already provisioned on this device?
+///
+/// Checks key existence in the native store without decrypting, so the
+/// onboarding flow can route to the unlock screen at launch (the native
+/// counterpart to the wasm `localStorage` existence check).
+#[tauri::command]
+pub async fn has_identity(app: AppHandle) -> Result<bool, String> {
+    let store = open_store(&app, "")?;
+    store.exists(KEY_MNEMONIC).await.map_err(|e| e.to_string())
+}
+
+/// Decrypt and return the mnemonic word list for the one-time backup screen.
+///
+/// This is the native counterpart to the wasm `export_mnemonic_words` boundary
+/// export — the single sanctioned path by which the mnemonic reaches the UI,
+/// guarded by the passphrase (see BOUNDARY.md, ADR-U-006).
+#[tauri::command]
+pub async fn export_mnemonic(app: AppHandle, passphrase: String) -> Result<Vec<String>, String> {
+    let store = open_store(&app, &passphrase)?;
+    let mnemonic_bytes = store
+        .get(KEY_MNEMONIC)
+        .await
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| "no identity provisioned".to_string())?;
+    let mnemonic = String::from_utf8(mnemonic_bytes).map_err(|e| e.to_string())?;
+    Ok(mnemonic.split_whitespace().map(|w| w.to_string()).collect())
+}

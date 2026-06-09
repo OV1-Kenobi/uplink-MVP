@@ -62,4 +62,12 @@ impl KvStore for SledStore {
             .map_err(|e| KvError::Backend(e.to_string()))?;
         Ok(())
     }
+
+    /// Existence check that does not decrypt — works without the correct
+    /// passphrase, used for the "is an identity provisioned?" probe at launch.
+    async fn exists(&self, key: &str) -> Result<bool, KvError> {
+        self.db
+            .contains_key(key)
+            .map_err(|e| KvError::Backend(e.to_string()))
+    }
 }

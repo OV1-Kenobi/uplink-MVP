@@ -45,3 +45,13 @@ export async function currentIdentity(
 ): Promise<IdentityInfo | null> {
   return invoke<IdentityInfo | null>("current_identity", { passphrase });
 }
+
+/** Passphrase-free probe: is an identity already provisioned on this device? */
+export async function hasIdentity(): Promise<boolean> {
+  return invoke<boolean>("has_identity");
+}
+
+/** Decrypt and return the mnemonic word list for the one-time backup screen. */
+export async function exportMnemonicWords(passphrase: string): Promise<string[]> {
+  return invoke<string[]>("export_mnemonic", { passphrase });
+}

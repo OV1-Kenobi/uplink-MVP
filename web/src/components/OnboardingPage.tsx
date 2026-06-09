@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { createIdentity, restoreIdentity, exportMnemonicWords, unlockIdentity } from "../wasm/uplink-client.ts";
+import { createIdentity, restoreIdentity, exportMnemonicWords, unlockIdentity, hasIdentity } from "../identity.ts";
 import { useIdentityStore } from "../store/identityStore.ts";
 
 type Step = "welcome" | "generate" | "backup" | "restore" | "unlock";
@@ -15,10 +15,18 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // If an identity already exists in storage, show unlock screen
-    if (localStorage.getItem("identity_mnemonic")) {
-      setStep("unlock");
-    }
+    // If an identity already exists in storage, show the unlock screen.
+    // Routed through the facade so it works on both the native (Tauri/sled)
+    // and wasm (browser) targets.
+    let cancelled = false;
+    hasIdentity()
+      .then((exists) => {
+        if (!cancelled && exists) setStep("unlock");
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function handleGenerate() {
@@ -30,7 +38,7 @@ export default function OnboardingPage() {
     setError(null);
     try {
       const npub = await createIdentity(password, 0);
-      const mnemonic = await exportMnemonicWords();
+      const mnemonic = await exportMnemonicWords(password);
       setWords(mnemonic);
       setPendingNpub(npub);
       setStep("backup");

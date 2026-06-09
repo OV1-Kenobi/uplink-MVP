@@ -18,6 +18,8 @@ pub fn run() {
       commands::create_identity,
       commands::restore_identity,
       commands::current_identity,
+      commands::has_identity,
+      commands::export_mnemonic,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
