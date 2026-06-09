@@ -13,9 +13,11 @@
 #![forbid(unsafe_code)]
 #![warn(clippy::pedantic)]
 
+pub mod credential;
 pub mod derivation;
 pub mod identity;
 pub mod error;
 
+pub use credential::{CredentialKind, CredentialMeta, ExternalCredential};
 pub use identity::UplinkIdentity;
 pub use error::IdentityError;

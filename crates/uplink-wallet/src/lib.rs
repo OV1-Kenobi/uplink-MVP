@@ -21,6 +21,7 @@
 pub mod executor;
 pub mod provider;
 pub mod executor_provider;
+pub mod lnc;
 pub mod lsp;
 #[cfg(feature = "native")]
 pub mod native;
@@ -33,6 +34,7 @@ pub mod error;
 pub use error::WalletError;
 pub use executor::{WalletExecutor, PaymentResult, WalletBalance};
 pub use executor_provider::ExecutorProvider;
+pub use lnc::LncProvider;
 pub use provider::{
     Invoice, InvoiceStatus, ListTxParams, ProviderError, Transaction, TxKind,
     WalletCapabilities, WalletInfo, WalletProvider,

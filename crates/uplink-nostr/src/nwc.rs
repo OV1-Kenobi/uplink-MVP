@@ -43,6 +43,22 @@ impl NwcProvider {
         Ok(Self::from_uri(uri, transport))
     }
 
+    /// Connect as a **receive-only** credential (optional restriction — ADR-U-010 §2).
+    ///
+    /// The MVP default ([`connect`](Self::connect)) is full receive + spend. This opt-in
+    /// constructor instead forces `spend_capable=false`: balance visibility and invoice
+    /// creation remain available, but `pay_invoice` is declined regardless of the wallet's
+    /// actual macaroon permissions. Used when a user wants to link a wallet for receive only.
+    pub fn connect_receive_only(
+        uri: &str,
+        transport: Box<dyn Nip47Transport>,
+    ) -> Result<Self, ProviderError> {
+        let mut provider = Self::connect(uri, transport)?;
+        provider.capabilities.can_pay = false;
+        provider.capabilities.spend_capable = false;
+        Ok(provider)
+    }
+
     /// Build directly from a parsed URI (used by tests and pre-parsed callers).
     pub fn from_uri(uri: NostrWalletConnectUri, transport: Box<dyn Nip47Transport>) -> Self {
         let capabilities = WalletCapabilities {
@@ -308,5 +324,35 @@ mod tests {
         // amountless invoice → total is just the reported fee.
         assert_eq!(res.total_msats_paid, 1_000);
         assert!(res.idempotency_key.starts_with("nwc:"));
+    }
+
+    #[tokio::test]
+    async fn nwc_receive_only_declines_spend_but_still_receives() {
+        // ADR-U-010 §2: an NWC credential connected for onboarding is receive-only.
+        let wallet = Keys::generate();
+        let client = Keys::generate();
+        let relay = RelayUrl::parse("wss://relay.example.com").unwrap();
+        let uri = NostrWalletConnectUri::new(
+            wallet.public_key(),
+            vec![relay],
+            client.secret_key().clone(),
+            None,
+        );
+        let p = NwcProvider::connect_receive_only(
+            &uri.to_string(),
+            Box::new(MockWallet { keys: wallet }),
+        )
+        .unwrap();
+
+        let caps = p.get_capabilities();
+        assert!(!caps.spend_capable && !caps.can_pay, "NWC must be receive-only");
+
+        // Spend is declined without any relay round-trip…
+        assert!(matches!(
+            p.pay_invoice("lnbc1pjnoamount", None).await,
+            Err(ProviderError::Declined(_))
+        ));
+        // …while receive (balance) still works.
+        assert_eq!(p.get_balance().await.unwrap().lightning_msats, 123_000);
     }
 }

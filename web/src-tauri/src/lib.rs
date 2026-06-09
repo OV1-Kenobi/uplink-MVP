@@ -3,6 +3,7 @@ mod commands;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
+    .manage(commands::Session::default())
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(
@@ -21,6 +22,15 @@ pub fn run() {
       commands::has_identity,
       commands::export_mnemonic,
       commands::reset_identity,
+      commands::connect_nwc,
+      commands::connect_lnc,
+      commands::set_lightning_address,
+      commands::link_identity,
+      commands::list_credentials,
+      commands::disconnect_credential,
+      commands::get_relays,
+      commands::set_relays,
+      commands::lock_session,
     ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");

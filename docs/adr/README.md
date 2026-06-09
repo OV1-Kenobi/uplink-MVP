@@ -13,6 +13,7 @@ All significant design decisions are documented here before implementation begin
 | [ADR-U-007](ADR-U-007-walletprovider-abstraction-nwc-adapter.md) | WalletProvider Abstraction + NWC Adapter | Accepted |
 | [ADR-U-008](ADR-U-008-automation-types-work-session-model.md) | Automation Types + Work-Session Model | Accepted |
 | [ADR-U-009](ADR-U-009-ntag424-sdm-provisioning-verification.md) | NTAG 424 DNA SDM Provisioning + Verification Contract | Accepted |
+| [ADR-U-010](ADR-U-010-external-credential-identity-and-relay-storage.md) | External-Credential Identity + Relay-as-Storage (Phase 5a) | Accepted |
 
 ## ADR format
 Follow the template implicitly used by the above records:

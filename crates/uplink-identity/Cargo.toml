@@ -18,3 +18,4 @@ rand       = { workspace = true }
 
 [dev-dependencies]
 # property-based: known-answer tests for key derivation
+serde_json = { workspace = true }

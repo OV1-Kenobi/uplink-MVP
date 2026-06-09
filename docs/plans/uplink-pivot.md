@@ -84,15 +84,35 @@ Wasm constraints); keep the Netlify web/desktop dashboard alive in parallel.
 
 ## Track 2 — New backend services (isolated phases)
 
-### Phase 5 — Identity service *(designated separate identity phase)*
-**Goal:** Stand up the receive-routing identity backend, decoupled from the wallet impl.
+### Phase 5a — External-credential identity *(client-only; ship first)*
+**Goal:** Lowest-friction onboarding with no backend — users bring existing credentials.
+- **Deliverables:** Bring-Your-Own-Credential onboarding (Lightning Address PRIMARY; NWC
+  receive + **spend** [MVP spend rail]; LNC spend [LND-direct, transport gated]; optional
+  npub / NIP-05 link; mnemonic create/restore demoted); external-credential model + redacted
+  `CredentialMeta`; encrypted local persistence in `PlatformStore` (no external DB); NWC
+  `spend_capable=true` via NIP-47 `pay_invoice` (opt-in `connect_receive_only` available);
+  `LncProvider: WalletProvider` with `pay_invoice` gated behind `Unavailable`; persisted,
+  user-configurable `RelayConfig` (default Damus / Primal / nos.lol); single-unlock session
+  (passphrase held in native `Session` state, `lock_session` on sign-out); Settings wallet +
+  relay hub. **Secrets never cross to the UI** (BOUNDARY.md, ADR-U-006).
+- **Depends on:** Phase 3 (resolver + credential-split contracts).
+- **ADRs:** ADR-U-010 — external-credential identity + relay-as-storage.
+- **Acceptance:** a user onboards with a Lightning Address alone; NWC receive + balance +
+  spend works (no stranded sats); an LNC pairing phrase persists and is capability-flagged
+  spend-capable with the direct transport gated; relays are reconfigurable and persisted;
+  the device password is entered once per session and never returned to the UI.
+
+### Phase 5b — Hosted vanity identity service *(deferred; backend)*
+**Goal:** Stand up the receive-routing identity backend for app-issued vanity addresses.
 - **Deliverables:** Postgres + identity/wallet tables (normalized username, pubkey,
   receive-only routing fields, encrypted credential, timestamps, revocation);
   `POST /identity/register`; `GET /.well-known/nostr.json` (NIP-05);
   `GET /.well-known/lnurlp/<user>` (LNURL-pay); `GET /lnurl/callback` (mints BOLT11 via a
   **receive-only** credential); stable safe error codes; **identity backend can never spend.**
-- **Depends on:** Phase 3 (resolver + credential-split contracts).
-- **ADRs:** ADR-U-010 — identity service + credential split.
+  Added as an additive resolver behind the same `RecipientAddress` interface (no client call-
+  site changes).
+- **Depends on:** Phase 5a (external-credential model + resolver interface).
+- **ADRs:** ADR-U-010 (§3 5a/5b boundary); a follow-up ADR covers the hosted service schema.
 - **Acceptance:** a username resolves via NIP-05 and an LNURL-pay invoice is minted by a
   credential with no spend authority (verified).
 

@@ -3,13 +3,16 @@
 use thiserror::Error;
 use nostr_sdk::prelude::*;
 
-/// Default relays shipped with Uplink.
+/// Default relays shipped with Uplink (MVP — ADR-U-010 §5).
+///
+/// Three general-purpose public relays. Fully reconfigurable from Settings and persisted
+/// via [`RelayConfig`]; these will be swapped for self-hosted private relays before
+/// production (the `wss://relay.openagents.com` whitelisted relay re-enters the default
+/// set once it is live).
 pub const DEFAULT_RELAYS: &[&str] = &[
     "wss://relay.damus.io",
+    "wss://relay.primal.net",
     "wss://nos.lol",
-    "wss://relay.nostr.band",
-    // OpenAgents-whitelisted relay (placeholder — replace with production URL):
-    "wss://relay.openagents.com",
 ];
 
 #[derive(Debug, Error)]
@@ -33,7 +36,7 @@ impl Default for RelayConfig {
     fn default() -> Self {
         Self {
             relays: DEFAULT_RELAYS.iter().map(|s| s.to_string()).collect(),
-            primary_relay: Some("wss://relay.openagents.com".to_string()),
+            primary_relay: Some("wss://relay.damus.io".to_string()),
         }
     }
 }
@@ -128,6 +131,25 @@ impl RelayPool {
 impl Clone for RelayPool {
     fn clone(&self) -> Self {
         self.clone_pool()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn mvp_default_relays_are_three_public_relays() {
+        // ADR-U-010 §5: Damus / Primal / nos.lol; the openagents placeholder is out of the
+        // MVP default set until the production relay is live.
+        assert_eq!(
+            DEFAULT_RELAYS,
+            ["wss://relay.damus.io", "wss://relay.primal.net", "wss://nos.lol"]
+        );
+        let cfg = RelayConfig::default();
+        assert_eq!(cfg.relays.len(), 3);
+        assert_eq!(cfg.primary_relay.as_deref(), Some("wss://relay.damus.io"));
+        assert!(!cfg.relays.iter().any(|r| r.contains("openagents")));
     }
 }
 

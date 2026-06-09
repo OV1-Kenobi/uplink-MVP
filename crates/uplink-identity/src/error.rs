@@ -11,4 +11,7 @@ pub enum IdentityError {
 
     #[error("storage error: {0}")]
     Storage(String),
+
+    #[error("invalid credential: {0}")]
+    InvalidCredential(String),
 }

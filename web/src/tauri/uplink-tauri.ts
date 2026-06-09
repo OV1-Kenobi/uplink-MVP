@@ -51,12 +51,78 @@ export async function hasIdentity(): Promise<boolean> {
   return invoke<boolean>("has_identity");
 }
 
-/** Decrypt and return the mnemonic word list for the one-time backup screen. */
-export async function exportMnemonicWords(passphrase: string): Promise<string[]> {
-  return invoke<string[]>("export_mnemonic", { passphrase });
+/** Decrypt and return the mnemonic word list for the one-time backup screen.
+ *  Uses the unlocked session passphrase held natively (single-unlock model). */
+export async function exportMnemonicWords(): Promise<string[]> {
+  return invoke<string[]>("export_mnemonic");
 }
 
 /** Clear the provisioned identity from the native store ("Reset app"). */
 export async function resetIdentity(): Promise<void> {
   await invoke("reset_identity");
+}
+
+/** Lock the session: clear the in-memory passphrase held natively (sign-out / lock). */
+export async function lockSession(): Promise<void> {
+  await invoke("lock_session");
+}
+
+// ── Phase 5a — external credentials + relay set (ADR-U-010) ──────────────────
+// Bearer secrets (NWC URI, LNC pairing phrase) never return to the UI: every call
+// below resolves to the redacted, non-secret `CredentialMeta`. These run against the
+// unlocked session passphrase held natively (single-unlock model) — no passphrase
+// crosses the boundary per call.
+
+export type CredentialKind = "lightning_address" | "nip05" | "npub" | "nwc" | "lnc";
+
+/** Redacted, non-secret descriptor of a linked credential. */
+export interface CredentialMeta {
+  kind: CredentialKind;
+  label: string;
+  receive_capable: boolean;
+  spend_capable: boolean;
+  added_at_unix: number;
+}
+
+/** Link an NWC connection string (receive + spend). */
+export async function connectNwc(uri: string): Promise<CredentialMeta> {
+  return invoke<CredentialMeta>("connect_nwc", { uri });
+}
+
+/** Link a Lightning Node Connect 10-word pairing phrase (spend; LND-direct, gated). */
+export async function connectLnc(pairingPhrase: string): Promise<CredentialMeta> {
+  return invoke<CredentialMeta>("connect_lnc", { pairingPhrase });
+}
+
+/** Set the user's own Lightning Address (primary receive path). */
+export async function setLightningAddress(address: string): Promise<CredentialMeta> {
+  return invoke<CredentialMeta>("set_lightning_address", { address });
+}
+
+/** Link an existing Nostr identity (npub or NIP-05). */
+export async function linkIdentity(
+  kind: "npub" | "nip05",
+  value: string,
+): Promise<CredentialMeta> {
+  return invoke<CredentialMeta>("link_identity", { kind, value });
+}
+
+/** List linked credentials as redacted descriptors. */
+export async function listCredentials(): Promise<CredentialMeta[]> {
+  return invoke<CredentialMeta[]>("list_credentials");
+}
+
+/** Remove a linked credential by its kind. */
+export async function disconnectCredential(kind: CredentialKind): Promise<void> {
+  await invoke("disconnect_credential", { kind });
+}
+
+/** Persisted relay set, or null if the user has never customized it. */
+export async function getRelays(): Promise<string[] | null> {
+  return invoke<string[] | null>("get_relays");
+}
+
+/** Persist the user's relay set. */
+export async function setRelays(relays: string[]): Promise<void> {
+  await invoke("set_relays", { relays });
 }
