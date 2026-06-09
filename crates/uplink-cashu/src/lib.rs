@@ -18,17 +18,21 @@
 /// Resolves the recipient's preferred Cashu mint from their kind-0 metadata,
 /// mints a P2PK-locked token, and publishes a kind-9735-equivalent nutzap event.
 ///
-/// Phase A5 implementation.
+/// The CDK nutzap path is not yet enabled. Returns [`NutzapError::NotEnabled`] rather
+/// than panicking, honoring the no-`todo!()` invariant (AGENTS.md / ADR-U-007 §5). The
+/// real mint/P2PK flow lands when the `cdk` feature is implemented in a later phase.
 pub async fn send_nutzap(
     _recipient_npub_hex: &str,
     _msats: u64,
     _memo: Option<&str>,
 ) -> Result<String, NutzapError> {
-    todo!("Phase A5: CDK nutzap send")
+    Err(NutzapError::NotEnabled)
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum NutzapError {
+    #[error("nutzap fallback not enabled (CDK integration pending)")]
+    NotEnabled,
     #[error("mint resolution failed: {0}")]
     MintResolution(String),
     #[error("CDK error: {0}")]

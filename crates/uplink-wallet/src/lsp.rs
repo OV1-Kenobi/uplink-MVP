@@ -6,10 +6,15 @@
 //! authentication scheme, Stable-Channels target-asset messages) will be pinned
 //! in ADR-U-002 once the OpenAgents LSP design is finalized.
 //!
-//! The LSP team is designing the LSP to match this interface.
-//! Replace the `todo!()` stubs with real implementation in Phase A4.
+//! The LSP team is designing the LSP to match this interface. Until the wire contract
+//! is pinned (ADR-U-002), these entry points return `WalletError::Lsp` rather than
+//! panicking — the no-`todo!()` invariant (AGENTS.md / ADR-U-007 §5) holds.
 //!
 //! ADR: docs/adr/ADR-U-002-lsp-wire-contract.md
+
+/// Shared message for not-yet-available LSP entry points (ADR-U-002 pending).
+const LSP_UNAVAILABLE: &str =
+    "OpenAgents LSP wire contract not yet available (ADR-U-002 pending)";
 
 use serde::{Deserialize, Serialize};
 use crate::WalletError;
@@ -34,8 +39,8 @@ pub async fn request_jit_channel(
     _our_node_pubkey: &str,
     _requested_capacity_sats: u64,
 ) -> Result<(), WalletError> {
-    // Phase A4: implement BOLT-spec LSP channel-request message
-    todo!("Phase A4: JIT channel request to OpenAgents LSP")
+    // Phase A4: implement BOLT-spec LSP channel-request message.
+    Err(WalletError::Lsp(LSP_UNAVAILABLE.into()))
 }
 
 /// Credit a recipient's Stable-Channel balance by `msats` via the LSP.
@@ -50,8 +55,8 @@ pub async fn credit_stable_channel(
     _idempotency_key: &str,
 ) -> Result<String, WalletError> {
     // Returns the payment preimage on success.
-    // Phase A4: implement Stable-Channels credit message
-    todo!("Phase A4: stable-channel credit via OpenAgents LSP")
+    // Phase A4: implement Stable-Channels credit message.
+    Err(WalletError::Lsp(LSP_UNAVAILABLE.into()))
 }
 
 /// Query the current Stable-Channels balance for a node.
@@ -59,6 +64,6 @@ pub async fn get_stable_balance(
     _lsp_endpoint: &str,
     _node_pubkey: &str,
 ) -> Result<StableChannelBalance, WalletError> {
-    // Phase A4: implement balance query
-    todo!("Phase A4: stable-channel balance query")
+    // Phase A4: implement balance query.
+    Err(WalletError::Lsp(LSP_UNAVAILABLE.into()))
 }

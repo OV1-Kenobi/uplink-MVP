@@ -15,6 +15,8 @@
 pub mod relay;
 pub mod kinds;
 pub mod zap;
+pub mod recipient;
+pub mod nwc;
 pub mod receipt;
 pub mod stream;
 pub mod delegation;
@@ -24,3 +26,5 @@ pub mod profile;
 
 pub use error::NostrError;
 pub use kinds::{KIND_STABLE_STREAM, KIND_STABLE_STREAM_RECEIPT};
+pub use nwc::{Nip47Transport, NwcProvider};
+pub use recipient::{LnurlClient, RecipientAddress};

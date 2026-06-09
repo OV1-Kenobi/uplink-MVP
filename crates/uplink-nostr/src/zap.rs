@@ -3,24 +3,52 @@
 //! Used as the fallback path when the recipient doesn't yet support
 //! Stable-Channel streaming (i.e., no LSP feature bits in their profile).
 //!
-//! Phase A5 implementation — stub only in A0.
+//! Recipient resolution lives in [`crate::recipient`] (ADR-U-007 §3); this module
+//! provides the kind-0 → Lightning-address extraction and a thin zap-invoice helper.
 
-/// Resolve a recipient's Lightning address from their kind-0 metadata.
+use crate::recipient::{resolve_invoice, LnurlClient, RecipientAddress};
+use crate::NostrError;
+
+/// Resolve a recipient's Lightning address from their kind-0 metadata JSON.
 ///
-/// Returns `None` if the profile has no `lud16` or `lud06` field.
-pub fn resolve_lightning_address(_profile_content: &str) -> Option<String> {
-    // Phase A5: parse kind-0 JSON, extract lud16 / lud06
-    todo!("Phase A5: parse kind-0 metadata for lud16/lud06")
+/// Returns `lud16` if present, else `lud06` (a bech32 `lnurl1…`); `None` if neither.
+pub fn resolve_lightning_address(profile_content: &str) -> Option<String> {
+    let meta: serde_json::Value = serde_json::from_str(profile_content).ok()?;
+    if let Some(lud16) = meta.get("lud16").and_then(|v| v.as_str()) {
+        if !lud16.is_empty() {
+            return Some(lud16.to_string());
+        }
+    }
+    meta.get("lud06")
+        .and_then(|v| v.as_str())
+        .filter(|s| !s.is_empty())
+        .map(str::to_string)
 }
 
-/// Construct a NIP-57 zap request and LNURL-pay it, returning a BOLT11 invoice.
+/// Resolve a Lightning address / LNURL into a payable BOLT11 invoice via LNURL-pay.
 ///
-/// Returns the invoice string that should be paid via `uplink-wallet`.
+/// The HTTP round-trips run through the injected [`LnurlClient`] shim. The returned
+/// invoice is paid via a [`uplink_wallet::WalletProvider`].
 pub async fn build_zap_invoice(
-    _recipient_lud16: &str,
-    _msats: u64,
-    _comment: Option<&str>,
-) -> Result<String, crate::NostrError> {
-    // Phase A5: HTTP call to lud16 LNURL-pay endpoint, then invoice back
-    todo!("Phase A5: LNURL-pay zap invoice")
+    client: &dyn LnurlClient,
+    recipient_lud16: &str,
+    msats: u64,
+    comment: Option<&str>,
+) -> Result<String, NostrError> {
+    let recipient = RecipientAddress::parse(recipient_lud16)?;
+    resolve_invoice(client, &recipient, msats, comment).await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extracts_lud16_then_lud06() {
+        let p = r#"{"name":"bob","lud16":"bob@example.com"}"#;
+        assert_eq!(resolve_lightning_address(p).as_deref(), Some("bob@example.com"));
+        let p2 = r#"{"name":"bob","lud16":"","lud06":"lnurl1xyz"}"#;
+        assert_eq!(resolve_lightning_address(p2).as_deref(), Some("lnurl1xyz"));
+        assert_eq!(resolve_lightning_address(r#"{"name":"bob"}"#), None);
+    }
 }

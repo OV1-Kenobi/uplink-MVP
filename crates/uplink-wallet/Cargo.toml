@@ -21,11 +21,12 @@ lightning         = { workspace = true }
 lightning-invoice = { workspace = true }
 bitcoin           = { workspace = true }
 
-serde      = { workspace = true }
-serde_json = { workspace = true }
-sha2       = { workspace = true }
-hex        = { workspace = true }
-thiserror  = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+sha2        = { workspace = true }
+hex         = { workspace = true }
+thiserror   = { workspace = true }
+async-trait = { workspace = true }
 
 # native only
 ldk-node = { workspace = true, optional = true }
@@ -35,3 +36,6 @@ tokio    = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
 js-sys       = { workspace = true, optional = true }
 web-sys      = { workspace = true, optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt"] }

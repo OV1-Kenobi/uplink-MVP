@@ -2133,6 +2133,7 @@ version = "0.45.0-alpha.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "96e9e406a7585380f4a398150ea81919b707b8eb969e37166a6cb17df774c534"
 dependencies = [
+ "aes",
  "base64 0.22.1",
  "bech32",
  "bip39",
@@ -3790,7 +3791,10 @@ name = "uplink-nostr"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
+ "bech32",
  "hex",
+ "lightning-invoice",
  "nostr",
  "nostr-sdk",
  "serde",
@@ -3798,6 +3802,7 @@ dependencies = [
  "sha2",
  "thiserror 1.0.69",
  "tokio",
+ "uplink-wallet",
  "uuid",
 ]
 
@@ -3848,6 +3853,7 @@ dependencies = [
 name = "uplink-wallet"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "bitcoin",
  "hex",
  "js-sys",

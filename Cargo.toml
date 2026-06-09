@@ -40,7 +40,7 @@ uplink-storage   = { path = "crates/uplink-storage" }
 uplink-core      = { path = "crates/uplink-core" }
 
 # Nostr (rust-nostr ecosystem)
-nostr            = { version = "0.45.0-alpha.1", features = ["nip44", "nip59"] }
+nostr            = { version = "0.45.0-alpha.1", features = ["nip44", "nip59", "nip47", "os-rng"] }
 nostr-sdk        = { version = "0.45.0-alpha.1", default-features = false }
 
 # Bitcoin / Lightning

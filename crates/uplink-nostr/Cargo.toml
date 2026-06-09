@@ -12,15 +12,23 @@ native  = ["tokio/full"]
 wasm    = ["tokio/sync", "tokio/macros"]
 
 [dependencies]
-anyhow     = { workspace = true }
-nostr      = { workspace = true }
-nostr-sdk  = { workspace = true }
-serde      = { workspace = true }
-serde_json = { workspace = true }
-sha2       = { workspace = true }
-hex        = { workspace = true }
-uuid       = { workspace = true, features = ["v4"] }
+uplink-wallet     = { workspace = true }
+
+anyhow            = { workspace = true }
+nostr             = { workspace = true }
+nostr-sdk         = { workspace = true }
+serde             = { workspace = true }
+serde_json        = { workspace = true }
+sha2              = { workspace = true }
+hex               = { workspace = true }
+uuid              = { workspace = true, features = ["v4"] }
+async-trait       = { workspace = true }
+bech32            = "0.11"
+lightning-invoice = { workspace = true }
 
 thiserror  = { workspace = true }
 tokio      = { workspace = true, optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt"] }
 
