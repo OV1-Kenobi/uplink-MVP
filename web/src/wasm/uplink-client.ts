@@ -94,6 +94,8 @@ export interface SplitPaymentIntent {
   source_wallet_id: string;
   legs: SplitLeg[];
   created_at_unix: number;
+  /** Authorizing work session for in-office intervals; absent otherwise (ADR-U-008). */
+  session_id?: string;
 }
 
 /**

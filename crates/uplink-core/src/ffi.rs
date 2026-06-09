@@ -295,7 +295,7 @@ pub fn upsert_stream(
     period_seconds: u64,
     start_at_unix: u64,
 ) -> Result<(), JsValue> {
-    use uplink_scheduler::stream::{StreamPolicy, StreamStatus};
+    use uplink_scheduler::stream::{AutomationType, StreamPolicy, StreamStatus};
     use uplink_accounts::SplitLeg;
 
     let policy = StreamPolicy {
@@ -316,6 +316,9 @@ pub fn upsert_stream(
         status: StreamStatus::Active,
         nostr_event_id: None,
         last_executed_period: None,
+        // The wasm boundary continues to produce standard-recurring streams;
+        // automation-type selection is wired in a later UI phase (ADR-U-008).
+        automation_type: AutomationType::StandardRecurring,
     };
 
     SCHEDULER.with(|cell| {

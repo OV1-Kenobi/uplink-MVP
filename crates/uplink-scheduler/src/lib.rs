@@ -20,8 +20,10 @@
 
 pub mod scheduler;
 pub mod stream;
+pub mod session;
 pub mod error;
 
 pub use scheduler::Scheduler;
-pub use stream::{StreamPolicy, StreamStatus};
+pub use stream::{AutomationType, Cadence, StreamPolicy, StreamStatus, IN_OFFICE_PERIOD_SECONDS};
+pub use session::{SessionStatus, WorkSession};
 pub use error::SchedulerError;

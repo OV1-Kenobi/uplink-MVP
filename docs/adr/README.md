@@ -10,6 +10,7 @@ All significant design decisions are documented here before implementation begin
 | [ADR-U-004](ADR-U-004-delegation-token-format.md) | Delegation Token Format | Accepted |
 | [ADR-U-005](ADR-U-005-key-recovery-otp-nostr.md) | Key Recovery via Nostr OTP | Accepted |
 | [ADR-U-006](ADR-U-006-platform-pivot-tauri-foss-distribution.md) | Platform Pivot to Tauri v2 + FOSS / De-Googled Distribution | Accepted |
+| [ADR-U-008](ADR-U-008-automation-types-work-session-model.md) | Automation Types + Work-Session Model | Accepted |
 
 ## ADR format
 Follow the template implicitly used by the above records:

@@ -41,6 +41,10 @@ pub struct SplitPaymentIntent {
     pub legs: Vec<SplitLeg>,
     /// Unix timestamp when this intent was generated.
     pub created_at_unix: u64,
+    /// Work session that authorized this interval, for in-office streaming.
+    /// `None` for one-time and standard-recurring intents (ADR-U-008).
+    #[serde(default)]
+    pub session_id: Option<String>,
 }
 
 impl SplitPaymentIntent {
@@ -73,6 +77,7 @@ mod tests {
             source_wallet_id: "wallet-001".into(),
             legs: vec![],
             created_at_unix: 1_700_000_000,
+            session_id: None,
         };
         let key_a = intent.leg_idempotency_key(0);
         let key_b = intent.leg_idempotency_key(0);
