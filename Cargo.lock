@@ -3779,6 +3779,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 1.0.69",
+ "universal-time",
  "uplink-accounts",
  "uplink-cashu",
  "uplink-identity",

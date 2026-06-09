@@ -5,6 +5,13 @@ version.workspace     = true
 edition.workspace     = true
 license.workspace     = true
 repository.workspace  = true
+# REQUIRED for the wasm build, not cosmetic: `universal-time` 0.3 (pulled in by
+# `nostr`) resolves its time provider through a link symbol whose name embeds
+# universal-time's own `CARGO_PKG_HOMEPAGE`. The `define_time_provider!` macro we
+# call in `src/lib.rs` re-derives that name from THIS crate's homepage, so the two
+# only match when they are identical. Pinning it here lets the macro export the
+# provider under the exact symbol `nostr` looks up on wasm32-unknown-unknown.
+homepage    = "https://github.com/shadowylab/universal-time"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -15,6 +22,7 @@ wasm     = [
     "dep:wasm-bindgen",
     "dep:js-sys",
     "dep:web-sys",
+    "dep:universal-time",
     "uplink-storage/wasm",
     "uplink-wallet/wasm",
     "uplink-nostr/wasm",
@@ -30,6 +38,9 @@ nostr            = { workspace = true }
 wasm-bindgen-futures = { workspace = true }
 getrandom_02 = { package = "getrandom", version = "0.2", features = ["js"] }
 getrandom_03 = { package = "getrandom", version = "0.3", features = ["wasm_js"] }
+# `nostr` pulls in `universal-time`, which on wasm32-unknown-unknown requires an
+# explicit link-time time provider (std::time is unavailable). Supplied below.
+universal-time = { version = "0.3", default-features = false, optional = true }
 uplink-identity  = { workspace = true }
 uplink-wallet    = { workspace = true }
 uplink-nostr     = { workspace = true }

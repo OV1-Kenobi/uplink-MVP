@@ -30,6 +30,9 @@ export default defineConfig({
       workbox: {
         // Cache the wasm bundle for offline use
         globPatterns: ["**/*.{js,css,html,wasm}"],
+        // The uplink-core wasm bundle is ~3 MB, above workbox's 2 MiB default;
+        // raise the precache ceiling so it is available offline.
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/relay\./,
