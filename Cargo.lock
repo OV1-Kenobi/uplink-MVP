@@ -3809,6 +3809,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "uplink-identity-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tokio",
+]
+
+[[package]]
 name = "uplink-nostr"
 version = "0.1.0"
 dependencies = [

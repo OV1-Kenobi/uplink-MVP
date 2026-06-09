@@ -1,0 +1,15 @@
+[package]
+name        = "uplink-identity-service"
+description = "Hosted vanity-identity service core (Phase 5b): NIP-05 + LNURL-pay, receive-only"
+version.workspace     = true
+edition.workspace     = true
+license.workspace     = true
+repository.workspace  = true
+
+[dependencies]
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+async-trait = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt"] }
