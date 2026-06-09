@@ -19,10 +19,10 @@ Uplink is a standalone PWA that lets human and agent users:
 | A2 | Nostr relay connectivity + profile resolution | ✅ Complete |
 | A3 | Lightning wallet on host-cli (regtest LDK) | ✅ Complete |
 | A4 | Lightning wallet in browser (wasm32 LDK + LSP) | ✅ Complete |
-| A5 | Pay-to-npub (NIP-57 zap + LSP stable-channel + NIP-61 fallback) | ✅ Complete |
+| A5 | Pay-to-npub (NIP-57 zap + LSP stable-channel + NIP-61 fallback) | 🟡 Partial — NIP-57 recipient resolver real (ADR-U-007); LSP stable-channel + NIP-61 nutzap gated, not functional (ADR-U-002 pending) |
 | A6 | Scheduler (recurring streaming-sats flows) | ✅ Complete |
 | A7 | Parent/child accounts + delegation | ✅ Complete |
-| A8 | Hardening + demo certification | ✅ Complete |
+| A8 | Hardening + demo certification | 🟡 Superseded by Tauri pivot (ADR-U-006); not yet certified |
 
 ## Architecture
 
