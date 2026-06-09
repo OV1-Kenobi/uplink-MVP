@@ -1,0 +1,21 @@
+[package]
+name        = "uplink-ntag424"
+description = "Pure-Rust NTAG 424 DNA (SDM/SUN) APDU client, provisioning, and local verifier"
+version.workspace     = true
+edition.workspace     = true
+license.workspace     = true
+repository.workspace  = true
+
+[features]
+default = []
+# session: wire verified taps to the Phase-2 work-session model (uplink-scheduler).
+session = ["dep:uplink-scheduler"]
+
+[dependencies]
+aes       = "0.8"
+cmac      = "0.7"
+cipher    = "0.4"
+hex       = { workspace = true }
+thiserror = { workspace = true }
+
+uplink-scheduler = { workspace = true, optional = true }

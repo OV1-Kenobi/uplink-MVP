@@ -9,6 +9,7 @@ members = [
     "crates/uplink-scheduler",
     "crates/uplink-receipts",
     "crates/uplink-storage",
+    "crates/uplink-ntag424",
     "crates/uplink-core",
     "host-cli",
 ]
@@ -37,6 +38,7 @@ uplink-accounts  = { path = "crates/uplink-accounts" }
 uplink-scheduler = { path = "crates/uplink-scheduler" }
 uplink-receipts  = { path = "crates/uplink-receipts" }
 uplink-storage   = { path = "crates/uplink-storage" }
+uplink-ntag424   = { path = "crates/uplink-ntag424" }
 uplink-core      = { path = "crates/uplink-core" }
 
 # Nostr (rust-nostr ecosystem)
