@@ -10,14 +10,27 @@
  * Run: eslint web/src --config ci/eslint-deny.config.js --max-warnings 0
  */
 
-import tsParser from "@typescript-eslint/parser";
-import tsPlugin from "@typescript-eslint/eslint-plugin";
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+
+// Parser + plugin are declared in web/package.json. Resolve them from
+// web/node_modules relative to this config's own location (not cwd), so the
+// documented `cd web && eslint --config ../ci/eslint-deny.config.js` command works.
+const require = createRequire(
+  resolve(dirname(fileURLToPath(import.meta.url)), "../web/package.json"),
+);
+const tsParser = require("@typescript-eslint/parser");
+const tsPlugin = require("@typescript-eslint/eslint-plugin");
 
 export default [
   {
-    files: ["web/src/**/*.{ts,tsx}"],
+    // Match both documented invocations: `cd web && eslint src` (cwd=web/) and
+    // `eslint web/src` from the repo root — globs are cwd-relative in flat config.
+    files: ["src/**/*.{ts,tsx}", "web/src/**/*.{ts,tsx}"],
     ignores: [
-      // The boundary file itself is allowed to interface with wasm
+      // The wasm boundary directory is allowed to interface with wasm
+      "src/wasm/**",
       "web/src/wasm/**",
     ],
     languageOptions: {
