@@ -1,0 +1,13 @@
+[package]
+name        = "uplink-attendance"
+description = "Authoritative attendance core (Phase 6): pure 7-step tap validator + WorkSession state machine"
+version.workspace     = true
+edition.workspace     = true
+license.workspace     = true
+repository.workspace  = true
+
+[dependencies]
+uplink-ntag424   = { workspace = true }
+uplink-scheduler = { workspace = true }
+serde            = { workspace = true }
+thiserror        = { workspace = true }

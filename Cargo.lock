@@ -3756,6 +3756,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "uplink-attendance"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "thiserror 1.0.69",
+ "uplink-ntag424",
+ "uplink-scheduler",
+]
+
+[[package]]
 name = "uplink-cashu"
 version = "0.1.0"
 dependencies = [
